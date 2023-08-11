@@ -445,9 +445,9 @@ static void run_application(void)
     qspi_packet_type_e qspi_packet_type_rx = 0;
     video_frame_color = WHITE;
     uint16_t touch_x1, touch_y1;
-
+    int i = 0;
     core0_icc(1);
-
+    uint8_t weights[10] = {1,2,3,4,5,6,7,8,9,10};
     // Main application loop
     while (1) {
 
@@ -562,6 +562,9 @@ static void run_application(void)
 
         // Handle QSPI TX
         qspi_master_video_tx_worker();
+        if(i = 10000){
+            cnn_2_load_weights_from_SD();
+        }
         qspi_master_audio_tx_worker();
 
         // Send BLE periodic statistics

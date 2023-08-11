@@ -284,7 +284,110 @@ static int sdcard_example(void)
 
     return 0;
 }
+static uint8_t *read_weights_from_SD(uint32_t datasize)
+{
+    // Read from SD file
+    if ((err = f_read(&file, (uint8_t *)kernel_buffer, datasize, &bytes_read)) !=
+        FR_OK) {
+        printf("ERROR reading file: %s\n", FF_ERRORS[err]);
+        f_mount(NULL, "", 0);
+        while (1)
+            ;
+    }
+ 
+    total_bytes += bytes_read;
+    // Adjust position in file
+    f_lseek(&file, total_bytes);
+    //printf("%d bytes read\n", bytes_read);
 
+    return &kernel_buffer[0];
+}
+
+int cnn_2_load_weights_from_SD(void)
+{
+    int i;
+    int buffer_size;
+    uint32_t len;
+    volatile uint32_t addr[1];
+    uint8_t *ptr;
+    uint32_t *tempptr;
+    if ((err = f_open(&file, "weights_2.bin", FA_READ)) != FR_OK) {
+        printf("ERROR opening file: %s\n", FF_ERRORS[err]);
+        f_mount(NULL, "", 0);
+        while (1)
+            ;
+    }
+
+    //printf("Opened file 'weights_2.bin'\n");
+    // Set beginning of the file
+    f_lseek(&file, 0);
+
+    // Copy weights from SD file to intermediate kernel buffer in SRAM
+    
+    ptr = read_weights_from_SD(10992); 
+     
+    qspi_master_send_video((uint8_t *)ptr,10992,QSPI_PACKET_TYPE_WEIGHTS_KERNELS0);
+    MXC_Delay(1000);
+    ptr = read_weights_from_SD(11280);       
+    qspi_master_send_video((uint8_t *)ptr,11280,QSPI_PACKET_TYPE_WEIGHTS_KERNELS1);
+    MXC_Delay(1000);
+    ptr = read_weights_from_SD(11280);       
+    qspi_master_send_video((uint8_t *)ptr,11280,QSPI_PACKET_TYPE_WEIGHTS_KERNELS2);
+    MXC_Delay(1000);
+    ptr = read_weights_from_SD(11280);       
+    qspi_master_send_video((uint8_t *)ptr,11280,QSPI_PACKET_TYPE_WEIGHTS_KERNELS3);
+    MXC_Delay(1000);
+    ptr = read_weights_from_SD(11280);       
+    qspi_master_send_video((uint8_t *)ptr,11280,QSPI_PACKET_TYPE_WEIGHTS_KERNELS4);
+    MXC_Delay(1000);
+    ptr = read_weights_from_SD(10128);       
+    qspi_master_send_video((uint8_t *)ptr,10128,QSPI_PACKET_TYPE_WEIGHTS_KERNELS5);
+    MXC_Delay(1000);
+    ptr = read_weights_from_SD(10128);       
+    qspi_master_send_video((uint8_t *)ptr,10128,QSPI_PACKET_TYPE_WEIGHTS_KERNELS6);
+    MXC_Delay(1000);
+    ptr = read_weights_from_SD(10128);       
+    qspi_master_send_video((uint8_t *)ptr,10128,QSPI_PACKET_TYPE_WEIGHTS_KERNELS7);
+    MXC_Delay(1000);
+    ptr = read_weights_from_SD(11280);
+ 
+    qspi_master_send_video((uint8_t *)ptr,11280,QSPI_PACKET_TYPE_WEIGHTS_KERNELS8);
+    MXC_Delay(1000);
+    ptr = read_weights_from_SD(11280);       
+    qspi_master_send_video((uint8_t *)ptr,11280,QSPI_PACKET_TYPE_WEIGHTS_KERNELS9);
+    MXC_Delay(1000);
+    ptr = read_weights_from_SD(11280); 
+   
+    qspi_master_send_video((uint8_t *)ptr,11280,QSPI_PACKET_TYPE_WEIGHTS_KERNELS10);
+    MXC_Delay(1000);
+    ptr = read_weights_from_SD(11280);       
+    qspi_master_send_video((uint8_t *)ptr,11280,QSPI_PACKET_TYPE_WEIGHTS_KERNELS11);
+    MXC_Delay(1000);
+    ptr = read_weights_from_SD(11280);       
+    qspi_master_send_video((uint8_t *)ptr,11280,QSPI_PACKET_TYPE_WEIGHTS_KERNELS12);
+    MXC_Delay(1000);
+    ptr = read_weights_from_SD(11280);       
+    qspi_master_send_video((uint8_t *)ptr,11280,QSPI_PACKET_TYPE_WEIGHTS_KERNELS13);
+    MXC_Delay(1000);
+    ptr = read_weights_from_SD(11280);            
+    qspi_master_send_video((uint8_t *)ptr,11280,QSPI_PACKET_TYPE_WEIGHTS_KERNELS14);
+    MXC_Delay(1000);
+    ptr = read_weights_from_SD(11280);            
+    qspi_master_send_video((uint8_t *)ptr,11280,QSPI_PACKET_TYPE_WEIGHTS_KERNELS15);
+    MXC_Delay(1000);
+    
+    total_bytes = 0;
+    if ((err = f_close(&file)) != FR_OK) {
+        printf("ERROR closing file: %s\n", FF_ERRORS[err]);
+        f_mount(NULL, "", 0);
+        while (1)
+            ;
+    }
+
+    //printf("File Closed\n");
+
+    return 0;
+}
 int sdcard_init(void)
 {
     mxc_sdhc_cfg_t cfg;
@@ -357,7 +460,10 @@ int sdcard_init(void)
         PR_INFO("SD clock ratio (at card) 2:1");
         MXC_SDHC_Set_Clock_Config(0);
     }
-
+    if((err = sdcard_mount()) != FR_OK) {
+        PR_ERROR("Error opening SD Card: %s", FF_ERRORS[err]);
+        return err;
+    }
 if (0) { // TODO: remove
     if(sdcard_example() != E_NO_ERROR) {
         PR_ERROR("SD CARD example failed");

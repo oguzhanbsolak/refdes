@@ -219,7 +219,7 @@ static int8_t flash_led = 0;
 static int8_t camera_vflip = 1;
 static int8_t enable_video = 0;
 static int8_t enable_sleep = 0;
-static uint8_t *qspi_payload_buffer = NULL;
+static uint8_t qspi_payload_buffer[11280];
 static version_t version = {S_VERSION_MAJOR, S_VERSION_MINOR, S_VERSION_BUILD};
 static char demo_name[] = FACEID_DEMO_NAME;
 static uint32_t camera_clock = 15 * 1000 * 1000;
@@ -405,12 +405,13 @@ int main(void)
     MXC_TMR_Start(MAX78000_VIDEO_SLEEP_DEFER_TMR);
 
     // Use camera interface buffer for QSPI payload buffer
+    /*
     {
         uint32_t  imgLen;
         uint32_t  w, h;
         camera_get_image(&qspi_payload_buffer, &imgLen, &w, &h);
     }
-
+*/
     // Successfully initialize the program
     PR_INFO("Program initialized successfully");
 
@@ -494,6 +495,183 @@ static void run_demo(void)
                     qspi_slave_send_packet(&faceid_embed_update_status, 1, QSPI_PACKET_TYPE_VIDEO_FACEID_EMBED_UPDATE_RES);
 
                     break;
+
+                case QSPI_PACKET_TYPE_WEIGHTS_KERNELS0:
+                    cnn_enable(MXC_S_GCR_PCLKDIV_CNNCLKSEL_PCLK, MXC_S_GCR_PCLKDIV_CNNCLKDIV_DIV1);
+                    cnn_init(); // Bring state machine into consistent state
+                    // cnn_load_weights_faceid(); // No need to reload kernels
+                    capture_started_time = GET_RTC_MS();
+                    *((volatile uint8_t *) 0x50180001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50180000, (uint32_t *)&qspi_payload_buffer[0], 705);    
+                    *((volatile uint8_t *) 0x50184001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50184000,(uint32_t *) &qspi_payload_buffer[2820], 705);
+                    *((volatile uint8_t *) 0x50188001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50188000, (uint32_t *)&qspi_payload_buffer[5640], 705);
+                    *((volatile uint8_t *) 0x5018c081) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x5018c000,(uint32_t *) &qspi_payload_buffer[8460], 633);    
+                      break;
+                case QSPI_PACKET_TYPE_WEIGHTS_KERNELS1:
+                    *((volatile uint8_t *) 0x50190001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50190000, (uint32_t *)&qspi_payload_buffer[0], 705);    
+                    *((volatile uint8_t *) 0x50194001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50194000, (uint32_t *)&qspi_payload_buffer[2820], 705);
+                    *((volatile uint8_t *) 0x50198001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50198000, (uint32_t *)&qspi_payload_buffer[5640], 705);
+                    *((volatile uint8_t *) 0x5019c001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x5019c000, (uint32_t *)&qspi_payload_buffer[8460], 705);   
+                    break;
+                case QSPI_PACKET_TYPE_WEIGHTS_KERNELS2:
+                    *((volatile uint8_t *) 0x501a0001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x501a0000, (uint32_t *)&qspi_payload_buffer[0], 705);    
+                    *((volatile uint8_t *) 0x501a4001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x501a4000, (uint32_t *)&qspi_payload_buffer[2820], 705);
+                    *((volatile uint8_t *) 0x501a8001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x501a8000,(uint32_t *) &qspi_payload_buffer[5640], 705);
+                    *((volatile uint8_t *) 0x501ac001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x501ac000, (uint32_t *)&qspi_payload_buffer[8460], 705);   
+                    break;                     
+                case QSPI_PACKET_TYPE_WEIGHTS_KERNELS3:
+                    *((volatile uint8_t *) 0x501b0001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x501b0000, (uint32_t *)&qspi_payload_buffer[0], 705);    
+                    *((volatile uint8_t *) 0x501b4001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x501b4000, (uint32_t *)&qspi_payload_buffer[2820], 705);
+                    *((volatile uint8_t *) 0x501b8001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x501b8000, (uint32_t *)&qspi_payload_buffer[5640], 705);
+                    *((volatile uint8_t *) 0x501bc001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x501bc000, (uint32_t *)&qspi_payload_buffer[8460], 705); 
+
+                    break;
+                case QSPI_PACKET_TYPE_WEIGHTS_KERNELS4:
+                    *((volatile uint8_t *) 0x50580001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50580000, (uint32_t *)&qspi_payload_buffer[0], 705);    
+                    *((volatile uint8_t *) 0x50584001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50584000, (uint32_t *)&qspi_payload_buffer[2820], 705);
+                    *((volatile uint8_t *) 0x50588001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50588000, (uint32_t *)&qspi_payload_buffer[5640], 705);
+                    *((volatile uint8_t *) 0x5058c001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x5058c000, (uint32_t *)&qspi_payload_buffer[8460], 705); 
+                    break;
+                case QSPI_PACKET_TYPE_WEIGHTS_KERNELS5:
+                    *((volatile uint8_t *) 0x50590081) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50590000, (uint32_t *)&qspi_payload_buffer[0], 633);    
+                    *((volatile uint8_t *) 0x50594081) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50594000, (uint32_t *)&qspi_payload_buffer[2532], 633);
+                    *((volatile uint8_t *) 0x50598081) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50598000, (uint32_t *)&qspi_payload_buffer[5064], 633);
+                    *((volatile uint8_t *) 0x5059c081) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x5059c000, (uint32_t *)&qspi_payload_buffer[7596], 633); 
+                    break;
+                case QSPI_PACKET_TYPE_WEIGHTS_KERNELS6:
+                    *((volatile uint8_t *) 0x505a0081) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x505a0000, (uint32_t *)&qspi_payload_buffer[0], 633);    
+                    *((volatile uint8_t *) 0x505a4081) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x505a4000, (uint32_t *)&qspi_payload_buffer[2532], 633);
+                    *((volatile uint8_t *) 0x505a8081) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x505a8000, (uint32_t *)&qspi_payload_buffer[5064], 633);
+                    *((volatile uint8_t *) 0x505ac081) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x505ac000, (uint32_t *)&qspi_payload_buffer[7596], 633); 
+
+                    break;
+                    
+                case QSPI_PACKET_TYPE_WEIGHTS_KERNELS7:
+                    *((volatile uint8_t *) 0x505b0081) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x505b0000, (uint32_t *)&qspi_payload_buffer[0], 633);    
+                    *((volatile uint8_t *) 0x505b4081) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x505b4000, (uint32_t *)&qspi_payload_buffer[2532], 633);
+                    *((volatile uint8_t *) 0x505b8081) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x505b8000,(uint32_t *) &qspi_payload_buffer[5064], 633);
+                    *((volatile uint8_t *) 0x505bc081) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x505bc000,(uint32_t *) &qspi_payload_buffer[7596], 633); 
+
+                    break;
+                case QSPI_PACKET_TYPE_WEIGHTS_KERNELS8:
+                    *((volatile uint8_t *) 0x50980001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50980000, (uint32_t *)&qspi_payload_buffer[0], 705);    
+                    *((volatile uint8_t *) 0x50984001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50984000, (uint32_t *)&qspi_payload_buffer[2820], 705);
+                    *((volatile uint8_t *) 0x50988001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50988000, (uint32_t *)&qspi_payload_buffer[5640], 705);
+                    *((volatile uint8_t *) 0x5098c001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x5098c000, (uint32_t *)&qspi_payload_buffer[8460], 705); 
+                    break;
+                case QSPI_PACKET_TYPE_WEIGHTS_KERNELS9:
+                    *((volatile uint8_t *) 0x50990001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50990000, (uint32_t *)&qspi_payload_buffer[0], 705);    
+                    *((volatile uint8_t *) 0x50994001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50994000, (uint32_t *)&qspi_payload_buffer[2820], 705);
+                    *((volatile uint8_t *) 0x50998001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50998000, (uint32_t *)&qspi_payload_buffer[5640], 705);
+                    *((volatile uint8_t *) 0x5099c001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x5099c000, (uint32_t *)&qspi_payload_buffer[8460], 705); 
+
+                    break; 
+                case QSPI_PACKET_TYPE_WEIGHTS_KERNELS10:
+                    *((volatile uint8_t *) 0x509a0001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x509a0000, (uint32_t *)&qspi_payload_buffer[0], 705);    
+                    *((volatile uint8_t *) 0x509a4001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x509a4000, (uint32_t *)&qspi_payload_buffer[2820], 705);
+                    *((volatile uint8_t *) 0x509a8001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x509a8000, (uint32_t *)&qspi_payload_buffer[5640], 705);
+                    *((volatile uint8_t *) 0x509ac001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x509ac000, (uint32_t *)&qspi_payload_buffer[8460], 705); 
+                    break;
+                case QSPI_PACKET_TYPE_WEIGHTS_KERNELS11:
+                    *((volatile uint8_t *) 0x509b0001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x509b0000, (uint32_t *)&qspi_payload_buffer[0], 705);    
+                    *((volatile uint8_t *) 0x509b4001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x509b4000, (uint32_t *)&qspi_payload_buffer[2820], 705);
+                    *((volatile uint8_t *) 0x509b8001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x509b8000, (uint32_t *)&qspi_payload_buffer[5640], 705);
+                    *((volatile uint8_t *) 0x509bc001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x509bc000, (uint32_t *)&qspi_payload_buffer[8460], 705); 
+
+                    break;
+                case QSPI_PACKET_TYPE_WEIGHTS_KERNELS12:
+                    *((volatile uint8_t *) 0x50d80001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50d80000, (uint32_t *)&qspi_payload_buffer[0], 705);    
+                    *((volatile uint8_t *) 0x50d84001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50d84000, (uint32_t *)&qspi_payload_buffer[2820], 705);
+                    *((volatile uint8_t *) 0x50d88001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50d88000, (uint32_t *)&qspi_payload_buffer[5640], 705);
+                    *((volatile uint8_t *) 0x50d8c001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50d8c000, (uint32_t *)&qspi_payload_buffer[8460], 705); 
+                    break;
+                case QSPI_PACKET_TYPE_WEIGHTS_KERNELS13:
+                    *((volatile uint8_t *) 0x50d90001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50d90000, (uint32_t *)&qspi_payload_buffer[0], 705);    
+                    *((volatile uint8_t *) 0x50d94001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50d94000, (uint32_t *)&qspi_payload_buffer[2820], 705);
+                    *((volatile uint8_t *) 0x50d98001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50d98000, (uint32_t *)&qspi_payload_buffer[5640], 705);
+                    *((volatile uint8_t *) 0x50d9c001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50d9c000, (uint32_t *)&qspi_payload_buffer[8460], 705); 
+
+                case QSPI_PACKET_TYPE_WEIGHTS_KERNELS14:
+                    *((volatile uint8_t *) 0x50da0001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50da0000, (uint32_t *)&qspi_payload_buffer[0], 705);    
+                    *((volatile uint8_t *) 0x50da4001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50da4000, (uint32_t *)&qspi_payload_buffer[2820], 705);
+                    *((volatile uint8_t *) 0x50da8001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50da8000, (uint32_t *)&qspi_payload_buffer[5640], 705);
+                    *((volatile uint8_t *) 0x50dac001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50dac000, (uint32_t *)&qspi_payload_buffer[8460], 705); 
+                    break;
+                    
+                case QSPI_PACKET_TYPE_WEIGHTS_KERNELS15:
+                    *((volatile uint8_t *) 0x50db0001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50db0000, (uint32_t *)&qspi_payload_buffer[0], 705);    
+                    *((volatile uint8_t *) 0x50db4001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50db4000, (uint32_t *)&qspi_payload_buffer[2820], 705);
+                    *((volatile uint8_t *) 0x50db8001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50db8000, (uint32_t *)&qspi_payload_buffer[5640], 705);
+                    *((volatile uint8_t *) 0x50dbc001) = 0x01; // Set address
+                    memcpy32((uint32_t *) 0x50dbc000, (uint32_t *)&qspi_payload_buffer[8460], 705); 
+                    faceokay = 0;
+                    weights = 1;
+                    capture_completed_time = GET_RTC_MS();
+                    PR_INFO("%d",(capture_completed_time - capture_started_time) * 1000);  
+                    break;
+                    
                 case QSPI_PACKET_TYPE_TEST:
                     PR_INFO("test data received %d", qspi_rx_header.info.packet_size);
                     for (int i = 0; i < qspi_rx_header.info.packet_size; i++) {
@@ -647,7 +825,9 @@ static void run_demo(void)
             qspi_completed_time = GET_RTC_MS();
 
             if (enable_cnn) {
-                run_cnn(0, 0);
+                if(!faceokay){
+                    run_cnn(0, 0);
+                }
             }
 
             cnn_completed_time = GET_RTC_MS();
@@ -709,7 +889,7 @@ static void run_cnn(int x_offset, int y_offset)
     // Enable CNN clock
     MXC_SYS_ClockEnable(MXC_SYS_PERIPH_CLOCK_CNN);
 
-    cnn_init(); // Bring state machine into consistent state
+   // cnn_init(); // Bring state machine into consistent state
     //cnn_load_weights(); // No need to reload kernels
     cnn_configure(); // Configure state machine
 
@@ -757,11 +937,11 @@ static void run_cnn(int x_offset, int y_offset)
 #endif
 
     cnn_unload((uint32_t*)(raw));
-
+    
     cnn_stop();
     // Disable CNN clock to save power
     MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_CNN);
-
+    cnn_disable();
 #ifdef PRINT_TIME_CNN
     PR_TIMER("CNN unload : %d", GET_RTC_MS() - pass_time);
     pass_time = GET_RTC_MS();
