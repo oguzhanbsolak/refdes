@@ -801,8 +801,14 @@ static int refresh_screen(void)
     // Draw FaceID frame and result
     if (device_settings.enable_max78000_video && device_settings.enable_max78000_video_cnn) {
         if (device_status.classification_video.classification != CLASSIFICATION_NOTHING) {
-            strncpy(lcd_string_buff, names[device_status.classification_video.max_embed_index], sizeof(lcd_string_buff) - 1);
-            fonts_putStringCentered(LCD_HEIGHT - 29, lcd_string_buff, &Font_16x26, video_string_color, lcd_data.buffer);
+            if(device_status.classification_video.classification != CLASSIFICATION_UNKNOWN){
+                strncpy(lcd_string_buff, names[device_status.classification_video.max_embed_index], sizeof(lcd_string_buff) - 1);
+                fonts_putStringCentered(LCD_HEIGHT - 29, lcd_string_buff, &Font_16x26, video_string_color, lcd_data.buffer);
+            }
+            else{
+                strncpy(lcd_string_buff, "UNKNOWN", sizeof(lcd_string_buff) - 1);
+                fonts_putStringCentered(LCD_HEIGHT - 29, lcd_string_buff, &Font_16x26, video_string_color, lcd_data.buffer);                
+            }
         }
     }
 

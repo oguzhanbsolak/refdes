@@ -22,7 +22,8 @@ For this purpose, the FaceID CNN model generates a 512-length embedding for a gi
 
 ## Testing Facial Recognition Demo
 
-The SD Card should contain three binaries: "weights_2.bin", "weights_3.bin" and "database.bin". "weights_2.bin" is used to load weights of the FaceID model, "weights_3.bin" is used to load weights of the DotProducts, and "database.bin" is used to keep track of the recorded people.
+The SD Card should contain three binaries: "weights_2.bin", "weights_3.bin" and "database.bin". "weights_2.bin" is used to load weights of the FaceID model, "weights_3.bin" is used to load weights of the DotProducts, and "database.bin" is used to keep track of the recorded people. These binaries can be found inside the maxrefdes178_max32666/SDCardBinaries folder.
+
 After loading all 3 components of DigitDetect Demo (MAX32666, MAX78000_video and MAX78000_audio), turn on the cube camera:
 
 - Insert the programmed SD Card into the CubeCamera.
@@ -59,4 +60,8 @@ After loading all 3 components of DigitDetect Demo (MAX32666, MAX78000_video and
 - The embeddings will record by pressing "Ok". The capture will be discarded by pressing "Retry".
 
 - Record mode is disabled by pressing the "X" button again. Now the device will recognize the recorded face.
-  
+
+Note: Pre-built binaries can be found inside the FacialRecognitionBinaries folder. This folder can be used to directly program the CubeCamera.
+
+Warning: Latest SDK release prevents the example from building successfully. To overcome this issue, one can use previous MSDK. The following command can be used to go to a working version of the MSDK:
+git checkout de0aa647f1c239d3022596b71ebe8cfcf851c3da  
