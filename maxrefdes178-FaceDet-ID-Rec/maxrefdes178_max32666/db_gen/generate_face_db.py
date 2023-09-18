@@ -83,7 +83,7 @@ def parse_arguments():
                         help='path for baseaddr header file')
     parser.add_argument('--emb', '-emb-path', type=str, default='include\max32666_embeddings.h',
                         help='path for embeddings header file')
-    parser.add_argument('--weights', '-weights-path', type=str, default='include\weights_3.bin',
+    parser.add_argument('--weights', '-weights-path', type=str, default='SDCardBinaries\weights_3.bin',
                         help='path for weights header file')
 
     args = parser.parse_args()
