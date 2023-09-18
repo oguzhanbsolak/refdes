@@ -292,7 +292,8 @@ static int8_t camera_vflip = 1;
 static int8_t enable_video = 0;
 static int8_t enable_sleep = 0;
 static uint8_t qspi_payload_buffer[24672]; 
-
+uint8_t *raw;
+uint8_t *data;
 static version_t version = {S_VERSION_MAJOR, S_VERSION_MINOR, S_VERSION_BUILD};
 static char demo_name[] = FACIAL_RECOGNITION_DEMO_NAME;
 static uint32_t camera_clock = 10 * 1000 * 1000;
@@ -394,6 +395,7 @@ int main(void)
 
     // Enable peripheral, enable CNN interrupt, turn on CNN clock
     // CNN clock: 50 MHz div 1
+    MXC_SYS_ClockEnable(MXC_SYS_PERIPH_CLOCK_CNN);
     ret  = cnn_enable(MXC_S_GCR_PCLKDIV_CNNCLKSEL_PCLK, MXC_S_GCR_PCLKDIV_CNNCLKDIV_DIV1);
     ret &= cnn_init(); // Bring CNN state machine into consistent state
     ret &= cnn_load_weights(); // Load CNN kernels
@@ -982,6 +984,8 @@ static void run_demo(void)
                 break;
             case QSPI_PACKET_TYPE_VIDEO_RECORD_EN:
                 PR_INFO("Record mode");
+                face_weights_loaded = 0;
+                cnn_3_flag = 0;
                 record_mode ^= 1;
                 printf("record_mode:%ds\n",record_mode);
                 break;
@@ -1106,8 +1110,6 @@ static void load_input_camera(int x_offset, int y_offset)
     // This function loads the sample data input
     memcpy32((uint32_t*)0x50402000, input_buffer, X_SIZE * Y_SIZE);
 #else // Camera
-    uint8_t *data;
-    uint8_t *raw;
     uint8_t ur, ug, ub;
     int8_t r, g, b;
     uint32_t number;
@@ -1166,7 +1168,6 @@ static void run_cnn(void)
 #endif
 
     // Enable CNN clock
-    MXC_SYS_ClockEnable(MXC_SYS_PERIPH_CLOCK_CNN);
     int ret= 0;
     ret  = cnn_enable(MXC_S_GCR_PCLKDIV_CNNCLKSEL_PCLK, MXC_S_GCR_PCLKDIV_CNNCLKDIV_DIV1);
     ret &= cnn_init(); // Bring CNN state machine into consistent state
@@ -1623,7 +1624,6 @@ static void localize_objects(void)
 
     if(obj_number) {    
         // First element is number of detected objects
-        //PR_INFO("obj_number:%d",obj_number);
         objects[0] = obj_number;
 
         // Send result to MAX32666
@@ -1644,7 +1644,7 @@ static void run_cnn2(int x_offset, int y_offset)
 {
     classification_result_t classification_result = {0};
     classification_result.classification = CLASSIFICATION_NOTHING;
-    uint8_t *raw;
+
     uint32_t imgLen;
     float y_prime;
     float x_prime;
@@ -1658,7 +1658,8 @@ static void run_cnn2(int x_offset, int y_offset)
     // Get the details of the image from the camera driver.
     camera_get_image(&raw, &imgLen, &w, &h);
     PR_INFO("w: %d, h: %d", w, h);
-    uint8_t *data = raw; 
+    data = raw; 
+
 #ifdef PRINT_TIME_CNN
     uint32_t pass_time = GET_RTC_MS();
 #endif
@@ -1842,6 +1843,7 @@ static void run_cnn2(int x_offset, int y_offset)
                     QSPI_PACKET_TYPE_VIDEO_SENDING_EMBEDDINGS_FLAG);
     PR_INFO("end of run_cnn2\n");
     cnn_3_flag = 1;
+    face_detected = 0;
 
 }
 
@@ -1907,7 +1909,7 @@ static void run_cnn3(){
     cnn_3_disable();
     int32_t *ml_point =  ml_3_data32;
     int8_t max_emb = 0;
-    int8_t max_emb_index = 0;
+    int32_t max_emb_index = 0;
     uint32_t value;
     int8_t pr_value;
     

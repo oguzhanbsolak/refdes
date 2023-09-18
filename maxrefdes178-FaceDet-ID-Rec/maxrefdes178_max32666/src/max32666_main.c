@@ -710,8 +710,9 @@ static void run_application(void)
         }
 
         // Button worker
-        button_worker(modes);
         if(modes[0] && getting_name ){
+          //  MXC_Delay(20000);
+          //  qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_RECORD_EN);
             lcd_drawImage(lcd_data.buffer);
             get_name(&embeddings);
             getting_name = 0;
@@ -720,7 +721,6 @@ static void run_application(void)
         }
         //key = MXC_TS_GetKey();
         if(modes[0] && !capture && !getting_name){
-            //fonts_putString(1, 200, lcd_string_buff, &Font_16x26, GREEN, 0, 0, lcd_data.buffer);
             snprintf(lcd_string_buff, sizeof(lcd_string_buff) - 1, "RECORD MODE");
             fonts_putStringCentered(150, lcd_string_buff, &Font_11x18, RED, lcd_data.buffer);
             snprintf(lcd_string_buff, sizeof(lcd_string_buff) - 1, "CAPTURE");
@@ -739,8 +739,6 @@ static void run_application(void)
         }
         
         if(modes[0] && capture){
-            //fonts_putString(1, 200, lcd_string_buff, &Font_16x26, GREEN, 0, 0, lcd_data.buffer);
-            memset(lcd_string_buff, 0x00, sizeof(lcd_string_buff));
             snprintf(lcd_string_buff, sizeof(lcd_string_buff) - 1, "OK");
             fonts_putString(35, 200, lcd_string_buff, &Font_16x26, GREEN, 0, 0, lcd_data.buffer);
             MXC_TS_AddButton(15,180,110,240,2);
@@ -767,9 +765,11 @@ static void run_application(void)
         }
         if(!modes[0] && (embeddings.capture_number!=0)){
             embeddings.capture_number =0;
+           // qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_RECORD_EN);
             getting_name = 1;
             find_names_number(&names,&db_number);
-        }                
+        }         
+        button_worker(modes);       
         // USB worker
 //        usb_worker();
 
@@ -802,12 +802,16 @@ static int refresh_screen(void)
     if (device_settings.enable_max78000_video && device_settings.enable_max78000_video_cnn) {
         if (device_status.classification_video.classification != CLASSIFICATION_NOTHING) {
             if(device_status.classification_video.classification != CLASSIFICATION_UNKNOWN){
-                strncpy(lcd_string_buff, names[device_status.classification_video.max_embed_index], sizeof(lcd_string_buff) - 1);
-                fonts_putStringCentered(LCD_HEIGHT - 29, lcd_string_buff, &Font_16x26, video_string_color, lcd_data.buffer);
+                if(!modes[0]){
+                    strncpy(lcd_string_buff, names[device_status.classification_video.max_embed_index], sizeof(lcd_string_buff) - 1);
+                    fonts_putStringCentered(LCD_HEIGHT - 29, lcd_string_buff, &Font_16x26, video_string_color, lcd_data.buffer);
+                }
             }
             else{
-                strncpy(lcd_string_buff, "UNKNOWN", sizeof(lcd_string_buff) - 1);
-                fonts_putStringCentered(LCD_HEIGHT - 29, lcd_string_buff, &Font_16x26, video_string_color, lcd_data.buffer);                
+                if(!modes[0]){
+                    strncpy(lcd_string_buff, "UNKNOWN", sizeof(lcd_string_buff) - 1);
+                    fonts_putStringCentered(LCD_HEIGHT - 29, lcd_string_buff, &Font_16x26, video_string_color, lcd_data.buffer);    
+                }            
             }
         }
     }

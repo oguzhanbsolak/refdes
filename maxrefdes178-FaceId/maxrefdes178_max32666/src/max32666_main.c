@@ -65,7 +65,7 @@
 #include "max32666_pmic.h"
 #include "max32666_powmon.h"
 #include "max32666_qspi_master.h"
-#include "max32666_sdcard.h"
+//#include "max32666_sdcard.h"
 #include "max32666_spi_dma.h"
 #include "max32666_timer_led_button.h"
 #include "max32666_touch.h"
@@ -447,7 +447,6 @@ static void run_application(void)
     uint16_t touch_x1, touch_y1;
     int i = 0;
     core0_icc(1);
-    uint8_t weights[10] = {1,2,3,4,5,6,7,8,9,10};
     // Main application loop
     while (1) {
 
@@ -562,9 +561,6 @@ static void run_application(void)
 
         // Handle QSPI TX
         qspi_master_video_tx_worker();
-        if(i = 10000){
-            cnn_2_load_weights_from_SD();
-        }
         qspi_master_audio_tx_worker();
 
         // Send BLE periodic statistics

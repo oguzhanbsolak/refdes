@@ -390,7 +390,7 @@ int qspi_master_video_rx_worker(qspi_packet_type_e *qspi_packet_type_rx)
     case QSPI_PACKET_TYPE_VIDEO_SENDING_EMBEDDINGS_FLAG:
         PR_INFO("embeddings flag");
     break;
-
+    
     case QSPI_PACKET_TYPE_FACEDET_VIDEO_DATA_RES:
         //if (qspi_packet_header_rx.info.packet_size != LCD_WIDTH * LCD_BYTE_PER_PIXEL) {
         if (qspi_packet_header_rx.info.packet_size != FACEDETECTION_DATA_SIZE) {

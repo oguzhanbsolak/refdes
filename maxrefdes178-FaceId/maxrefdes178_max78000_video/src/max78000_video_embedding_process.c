@@ -90,7 +90,8 @@ static int8_t gClosestSubId[closest_sub_buffer_size];
 static uint8_t gMinDistanceCounter[FACEID_MAX_SUBJECT];
 static tsDistance gDistance[FACEID_MAX_SUBJECT * FACEID_MAX_PHOTO_PER_SUBJECT];
 
-static tsFaceIDFile *pDatabaseInfo = NULL;
+//static tsFaceIDFile *pDatabaseInfo = NULL;
+static uint8_t *pDatabaseInfo = NULL;
 static uint32_t gClosestSubIdBufIdx = 0;
 
 
@@ -129,8 +130,10 @@ static uint32_t gClosestSubIdBufIdx = 0;
 
 int init_database(void)
 {
-	pDatabaseInfo = (tsFaceIDFile *)embeddings;
-
+	pDatabaseInfo = (uint8_t *)embeddings;
+    for(int i = 0; i<1000;i++){
+        printf("data:%x \n",pDatabaseInfo[i]);
+    }
     for(int i=0; i<closest_sub_buffer_size; ++i){
         gClosestSubId[i] = -1;
     }

@@ -220,9 +220,11 @@ int button_worker(int *modes)
         button_x_int = 0;
         modes[0] ^= 1;
         PR_INFO("button X pressed");
+        MXC_Delay(20000);
         qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_RECORD_EN);
         timestamps.activity_detected = timer_ms_tick;
 
+/*
         device_settings.enable_lcd_statistics = !device_settings.enable_lcd_statistics;
 
         if (device_settings.enable_lcd_statistics) {
@@ -232,6 +234,7 @@ int button_worker(int *modes)
         }
 
         timestamps.faceid_subject_names_received = timer_ms_tick;
+        */
     }
 
     if (button_power_int) {

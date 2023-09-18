@@ -108,7 +108,10 @@ static void core1_icc(int enable);
 static void run_application(void);
 static int refresh_screen(void);
 
-
+void GPIO0_IRQHandler(void)
+{
+    MXC_GPIO_Handler(MXC_GPIO_GET_IDX(MXC_GPIO0));
+}
 //-----------------------------------------------------------------------------
 // Function definitions
 //-----------------------------------------------------------------------------
