@@ -54,7 +54,6 @@
 #include "max78000_video_cnn.h"
 #include "max78000_video_cnn_faceid.h"
 #include "max78000_video_cnn_3.h"
-#include "max78000_video_embedding_process.h"
 #include "max78000_video_weights.h"
 #include "max78000_video_weights_3.h"
 #include "maxrefdes178_definitions.h"
@@ -102,7 +101,6 @@ static void get_cxcy(float* cxcy, int prior_idx);
 static void gcxgcy_to_cxcy(float* cxcy, int prior_idx, float* priors_cxcy);
 static void cxcy_to_xy(float* xy, float* cxcy);
 static void localize_objects(void);
-//static uint32_t  camera_image[LCD_DATA_SIZE/4];
 
 #ifdef USE_SAMPLEDATA
 const uint32_t input_buffer[] = SAMPLE_INPUT_0;
@@ -120,7 +118,6 @@ uint8_t embeddings_loaded = 0;
 int record_mode = 0;
 int cnn_3_flag = 0;
 const int dims[NUM_SCALES][2] = {{28,21}, {7,5}};
- // NUM_PRIORS_PER_AR = SQUARE(dims[0]) + SQUARE(dims[1]) + SQUARE(dims[2]) + SQUARE(dims[3])
 const float scales[NUM_SCALES] = {0.35715f, 0.7143f};
 const float ars[NUM_ARS]       = {0.9f, 0.75f};
 //Arrays pointers to store model outputs
@@ -140,7 +137,6 @@ volatile int32_t output_buffer[16];
 static int32_t ml_3_data32[(1024 + 3) / 4];
 int rec = 0;
 int done = 0;
-//static uint32_t embeddings[96];
 
 
 static const mxc_gpio_cfg_t gpio_flash     = MAX78000_VIDEO_FLASH_LED_PIN;
@@ -329,7 +325,6 @@ static void localize_objects(void);
 void button_int(void *cbdata)
 {
     button_pressed = 1;
-    //photo_accepted = 0;
 }
 
 void sleep_defer_int(void)
@@ -362,7 +357,6 @@ int main(void)
     GPIO_SET(gpio_flash);
 
     // Configure CNN boost
-    //GPIO_SET(gpio_cnn_boost);
     GPIO_CLR(gpio_cnn_boost);
     MXC_GPIO_Config(&gpio_cnn_boost);
 
@@ -477,15 +471,10 @@ int main(void)
     }
 
     // set camera clock prescaller to prevent streaming overflow due to QSPI communication and CNN load latency
-    //camera_write_reg(0x11, 0x2);
-
-    // make the scale ratio of camera input size the same as output size, make is faster and regular
-    
+    // make the scale ratio of camera input size the same as output size, make is faster and regular    
     camera_write_reg(0xc8, 0x1);
-    //camera_write_reg(0xc9, 0x60);
     camera_write_reg(0xc9, 0xE0);
     camera_write_reg(0xca, 0x1);
-    //camera_write_reg(0xcb, 0x60);
     camera_write_reg(0xcb, 0xE0);
     // Init button interrupt
     PB_RegisterCallback(0, (pb_callback) button_int);
@@ -527,12 +516,8 @@ static void fail(void)
 }
 static void run_demo(void)
 {
-    //uint32_t capture_started_time = GET_RTC_MS(); // Not used
-    //uint32_t cnn_completed_time = 0; // Not used
-    //uint32_t qspi_completed_time = 0; // Not used
-    //uint32_t capture_completed_time = 0; // Not used
+
     uint32_t weight_loading_time = 0;
-    //max78000_statistics_t max78000_statistics = {0}; // Not used
     qspi_packet_header_t qspi_rx_header;
     qspi_state_e qspi_rx_state;
     camera_start_capture_image();
@@ -552,7 +537,6 @@ static void run_demo(void)
                 PR_ERROR("Invalid payload crc %x", qspi_rx_header.payload_crc16);
                 qspi_slave_set_rx_state(QSPI_STATE_IDLE);
                 camera_start_capture_image();
-                //continue;
             }
 
             // QSPI commands with payload
@@ -562,7 +546,6 @@ static void run_demo(void)
                 case QSPI_PACKET_TYPE_WEIGHTS_KERNELS0:
                     cnn_enable_faceid(MXC_S_GCR_PCLKDIV_CNNCLKSEL_PCLK, MXC_S_GCR_PCLKDIV_CNNCLKDIV_DIV1);
                     cnn_init_faceid(); // Bring state machine into consistent state
-                    // cnn_load_weights_faceid(); // No need to reload kernels
                     weight_loading_time = GET_RTC_MS();
                     *((volatile uint8_t *) 0x50180001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x50180000, (uint32_t *)&qspi_payload_buffer[0], 1537);
@@ -910,7 +893,7 @@ static void run_demo(void)
 
                 break;
             case QSPI_PACKET_TYPE_VIDEO_DISABLE_CMD:
-                printf("disable video");
+                PR_INFO("disable video");
                 enable_video = 0;
                 MXC_PCIF_Stop();
                 // Disable camera
@@ -918,7 +901,7 @@ static void run_demo(void)
                 GPIO_CLR(gpio_red);
                 GPIO_CLR(gpio_green);
                 // Also CNN
-                printf("disable cnn");
+                PR_INFO("disable cnn");
                 enable_cnn = 0;
                 break;
             case QSPI_PACKET_TYPE_VIDEO_ENABLE_CNN_CMD:
@@ -1041,81 +1024,55 @@ static void run_demo(void)
         }
 
             if (camera_is_image_rcv()) { 
-            //capture_started_time = GET_RTC_MS();
-            // capture image frame for display
-            if(!cnn_3_flag){
-                send_img();
-            }
-            //capture_completed_time = GET_RTC_MS();
-            //qspi_completed_time = GET_RTC_MS();
+
+                if(!cnn_3_flag){
+                    send_img();
+                }
     
-            if (enable_cnn && !getting_name) {
-                if(record_mode){
-                    //If record mode is active until the capture button is pressed, only the face_detection model runs. 
-                    if(capture){        
-                        if(face_weights_loaded && face_detected){
-                            printf("After weights loaded\n");
-                            PR_INFO("run_cnn2");
-                            run_cnn2(0, 0);
-                            face_weights_loaded = 0;                            
+                if (enable_cnn && !getting_name) {
+                    if(record_mode){
+                        //If record mode is active until the capture button is pressed, only the face_detection model runs. 
+                        if(capture){        
+                            if(face_weights_loaded && face_detected){
+                                PR_INFO("run_cnn2");
+                                run_cnn2(0, 0);
+                                face_weights_loaded = 0;                            
+                            }
+                            else{
+                                run_cnn();
+                            }
                         }
                         else{
                             run_cnn();
                         }
                     }
                     else{
-                        run_cnn();
-                    }
-                }
-                else{
-                    //If the record mode is not active, first the face_detection model runs. 
-                    //When a face is detected, the FaceID weights are loaded and the face_weights_loaded flag is set. 
-                    //Afterward, the FaceID model runs. Finally, the weights of the DotProduct model are loaded to the 
-                    //CNN and the results from the FaceID model are fed into the CNN as input. 
-                    //The final maximum index is sent to the MAX32666 core.
-                    if(face_weights_loaded){
-                        run_cnn2(0, 0);
-                        face_weights_loaded = 0;
-                    }
-                    else if(embeddings_loaded && cnn_3_flag){
-                        run_cnn3();
-                        cnn_3_flag = 0;
-                        embeddings_loaded = 0;
-                    }
-                    else{
-                        run_cnn();
-                    }
+                        //If the record mode is not active, first the face_detection model runs. 
+                        //When a face is detected, the FaceID weights are loaded and the face_weights_loaded flag is set. 
+                        //Afterward, the FaceID model runs. Finally, the weights of the DotProduct model are loaded to the 
+                        //CNN and the results from the FaceID model are fed into the CNN as input. 
+                        //The final maximum index is sent to the MAX32666 core.
+                        if(face_weights_loaded){
+                            run_cnn2(0, 0);
+                            face_weights_loaded = 0;
+                        }
+                        else if(embeddings_loaded && cnn_3_flag){
+                            run_cnn3();
+                            cnn_3_flag = 0;
+                            embeddings_loaded = 0;
+                        }
+                        else{
+                            run_cnn();
+                        }
 
+                    }
                 }
-            }
-            else
-              	PR_INFO("CNN_DIS");
-            /*    
-            cnn_completed_time = GET_RTC_MS();
+                else
+              	    PR_INFO("CNN_DIS");
             
-            if (time_counter % 10 == 0) {
-                max78000_statistics.capture_duration_us = (capture_completed_time - capture_started_time);
-                max78000_statistics.communication_duration_us = (qspi_completed_time - capture_completed_time);
-                max78000_statistics.cnn_duration_us = cnn_time; //(cnn_completed_time - qspi_completed_time);
-                max78000_statistics.total_duration_us = (cnn_completed_time - capture_started_time);
-    
-                PR_DEBUG("Capture : %lu", max78000_statistics.capture_duration_us);
-                PR_DEBUG("CNN     : %lu", max78000_statistics.cnn_duration_us);
-                PR_DEBUG("QSPI    : %lu", max78000_statistics.communication_duration_us);
-                PR_DEBUG("Total   : %lu\n\n", max78000_statistics.total_duration_us);
-    
-                PR_INFO("Send Stat");
-                //qspi_slave_send_packet((uint8_t *) &max78000_statistics, sizeof(max78000_statistics),
-                //                        QSPI_PACKET_TYPE_VIDEO_STATISTICS_RES);
+                time_counter++;
+                camera_start_capture_image();
             }
-            */
-            time_counter++;
-            camera_start_capture_image();
-            //capture_started_time = GET_RTC_MS();
-            }
-        //}
-                   // qspi_slave_send_packet((uint8_t *) &max78000_statistics, sizeof(max78000_statistics),
-                    //                QSPI_PACKET_TYPE_VIDEO_STATISTICS_RES);
     }
 }
 
@@ -1136,12 +1093,9 @@ static void load_input_camera(int x_offset, int y_offset)
 	// CNN needs RGB888, pack into 32bit word
 
         for (int i = y_offset; i < FACEDETECTION_HEIGHT + y_offset; i++) {
-            //PR_INFO("i=%d",i);
         data = raw + ( i * FACEDETECTION_WIDTH * LCD_BYTE_PER_PIXEL);  // down
-        //data += ((FACEDETECTION_HEIGHT - FACEDETECTION_WIDTH) / 2) * LCD_BYTE_PER_PIXEL;  // right
 
         for(int j = x_offset; j < FACEDETECTION_WIDTH + x_offset; j++) {
-            //PR_INFO("j=%d",j);
             // RGB565, |RRRRRGGG|GGGBBBBB|
             ub = (data[j * LCD_BYTE_PER_PIXEL + 1] << 3);
             ug = ((data[j * LCD_BYTE_PER_PIXEL] << 5) | ((data[j * LCD_BYTE_PER_PIXEL + 1] & 0xE0) >> 3));
@@ -1149,7 +1103,6 @@ static void load_input_camera(int x_offset, int y_offset)
             b = ub - 128;
             g = ug - 128;
             r = ur - 128;
-            //PR_INFO("r=%d",r);
             // Loading data into the CNN fifo
             while (((*((volatile uint32_t *) 0x50000004) & 1)) != 0); // Wait for FIFO 0
 
@@ -1172,7 +1125,6 @@ static void send_img(void)
     camera_get_image(&raw, &imgLen, &w, &h);
 
     qspi_slave_send_packet(raw, imgLen, QSPI_PACKET_TYPE_FACEDET_VIDEO_DATA_RES);
-  //  MXC_Delay(MXC_DELAY_MSEC(3));
 }
 
 static void run_cnn(void)
@@ -1233,8 +1185,6 @@ static void run_cnn(void)
     localize_objects();
 
     cnn_disable();
-    // Disable CNN clock to save power
-    //MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_CNN);
 
 #ifdef PRINT_TIME_CNN
     PR_TIMER("CNN unload : %d", GET_RTC_MS() - pass_time);
@@ -1245,11 +1195,6 @@ static void run_cnn(void)
 
 static void nms_memory_init(void)
 {
-    // Use "camera_image" buffer as a scratch memory to allocate NMS related arrays
-    //prior_cls_softmax = (uint16_t*)&camera_image[0];
-    //nms_removed = (uint8_t*)&prior_cls_softmax[NUM_CLASSES * NUM_PRIORS];
-    //prior_cls = (int8_t*)&nms_removed[(NUM_CLASSES-2) * MAX_PRIORS];
-    //prior_locs = (int8_t*)&prior_cls[NUM_CLASSES * NUM_PRIORS];
     objects = (uint8_t*)&prior_locs[LOC_DIM * NUM_PRIORS];
 }
 
@@ -1498,7 +1443,6 @@ static void reset_nms(void)
             nms_scores[cl][p_idx]  = 0;
             nms_indices[cl][p_idx] = 0;
             nms_removed[cl][p_idx] = 0;
-            //nms_removed[cl*MAX_PRIORS + p_idx] = 0;
         }
     }
 }
@@ -1530,14 +1474,12 @@ static void nms(void)
 
     for (class_idx = 0; class_idx < (NUM_CLASSES - 2); ++class_idx) {
         for (nms_idx1 = 0; nms_idx1 < num_nms_priors[class_idx]; ++nms_idx1) {
-            //if (nms_removed[class_idx * num_nms_priors[class_idx] + nms_idx1] != 1 &&
             if (nms_removed[class_idx][nms_idx1] != 1 &&            
                 nms_idx1 != num_nms_priors[class_idx] - 1) {
                 for (nms_idx2 = nms_idx1 + 1; nms_idx2 < num_nms_priors[class_idx]; ++nms_idx2) {
                     prior1_idx = nms_indices[class_idx][nms_idx1];
                     prior2_idx = nms_indices[class_idx][nms_idx2];
 
-                    // TODO: Let's implement the box loc finding before this nested loop for 100 priors
                     get_cxcy(prior_cxcy1, prior1_idx);
                     get_cxcy(prior_cxcy2, prior2_idx);
 
@@ -1551,7 +1493,6 @@ static void nms(void)
 
                     if (iou > MAX_ALLOWED_OVERLAP) {
                         nms_removed[class_idx][nms_idx2] = 1;
-                        //nms_removed[class_idx * num_nms_priors[class_idx] + nms_idx2] = 1;
                     }
                 }
             }
@@ -1688,11 +1629,10 @@ static void run_cnn2(int x_offset, int y_offset)
     PR_TIMER("CNN init : %d", GET_RTC_MS() - pass_time);
     pass_time = GET_RTC_MS();
 #endif
- // cnn_unload_faceid((uint32_t *) ml_data32);
 
     for (int i = 0; i < FACEID_HEIGHT; i++) {
         y_prime = ((float)(i) / FACEID_HEIGHT) * box_height;
-        y_loc = (uint8_t)(MIN(round(y_prime), box_height - 1)); // + y1;
+        y_loc = (uint8_t)(MIN(round(y_prime), box_height - 1));
         data = raw + y1 * FACEDETECTION_WIDTH * LCD_BYTE_PER_PIXEL + y_loc * LCD_BYTE_PER_PIXEL * FACEDETECTION_WIDTH;
         data += x1 * LCD_BYTE_PER_PIXEL;
         for (int j = 0; j < FACEID_WIDTH; j++) {
@@ -1714,7 +1654,7 @@ static void run_cnn2(int x_offset, int y_offset)
             number = 0x00FFFFFF & ((((uint8_t)b) << 16) | (((uint8_t)g) << 8) | ((uint8_t)r));
             // Loading data into the CNN fifo
             // Remove the following line if there is no risk that the source would overrun the FIFO:
-            //PR_DEBUG("number: %d", i);
+
             
             while (((*((volatile uint32_t *)0x50000004) & 1)) != 0)
                 ; // Wait for FIFO 0
@@ -1788,7 +1728,6 @@ static void run_cnn2(int x_offset, int y_offset)
         output_buffer[i] = (((uint8_t)n4) << 24) | (((uint8_t)n3) << 16) | (((uint8_t)n2) << 8) | ((uint8_t)n1); 
     }
 
-    //uint32_t *out_point = (uint32_t *)output_buffer;
 
 
     if(record_mode && capture ){

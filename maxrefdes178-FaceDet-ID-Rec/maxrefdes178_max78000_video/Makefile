@@ -86,7 +86,6 @@ SRCS  = max78000_video_main.c
 SRCS += max78000_video_cnn.c
 SRCS += max78000_video_cnn_faceid.c
 SRCS += max78000_video_cnn_3.c
-SRCS += max78000_video_embedding_process.c
 SRCS += max78000_qspi_slave.c
 SRCS += maxrefdes178_utility.c
 

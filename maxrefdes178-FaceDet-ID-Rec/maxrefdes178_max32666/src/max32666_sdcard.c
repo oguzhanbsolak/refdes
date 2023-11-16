@@ -138,7 +138,6 @@ static uint8_t *read_weights_from_SD(uint32_t datasize)
     total_bytes += bytes_read;
     // Adjust position in file
     f_lseek(&file, total_bytes);
-    //printf("%d bytes read\n", bytes_read);
 
     return &kernel_buffer[0];
 }
@@ -159,7 +158,6 @@ int cnn_2_load_weights_from_SD(void)
             ;
     }
 
-    //printf("Opened file 'weights_2.bin'\n");
     // Set beginning of the file
     f_lseek(&file, 0);
 

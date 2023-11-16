@@ -206,11 +206,6 @@ int main(void)
         MXC_SYS_Reset_Periph(MXC_SYS_RESET_SYSTEM);
     }
 
-//    ret = ext_sram_init();
-//    if (ret != E_NO_ERROR) {
-//        PR_ERROR("ext_sram_init failed %d", ret);
-//        pmic_led_red(1);
-//    }
 
     ret = lcd_init();
     if (ret != E_NO_ERROR) {
@@ -246,30 +241,7 @@ int main(void)
         pmic_led_red(1);
     }
 
-//    ret = powmon_init();
-//    if (ret != E_NO_ERROR) {
-//        PR_ERROR("powmon_init failed %d", ret);
-//        pmic_led_red(1);
-//    }
-//
-//    ret = usb_init();
-//    if (ret != E_NO_ERROR) {
-//        PR_ERROR("usb_init failed %d", ret);
-//        pmic_led_red(1);
-//    }
-//
-//    ret = ext_flash_init();
-//    if (ret != E_NO_ERROR) {
-//        PR_ERROR("ext_flash_init failed %d", ret);
-//        pmic_led_red(1);
-//    }
-//
-//    ret = audio_codec_init();
-//    if (ret != E_NO_ERROR) {
-//        PR_ERROR("audio_codec_init failed %d", ret);
-//        pmic_led_red(1);
-//    }
-//
+
     ret = sdcard_init();
     if (ret != E_NO_ERROR) {
         PR_ERROR("sdcard_init failed %d", ret);
@@ -279,20 +251,6 @@ int main(void)
         MXC_Delay(MXC_DELAY_MSEC(1000));
         while(1);
     }
-//
-//    ret = ble_queue_init();
-//    if (ret != E_NO_ERROR) {
-//        PR_ERROR("ble_queue_init failed %d", ret);
-//        pmic_led_red(1);
-//    }
-//
-//    ret = ble_command_init();
-//    if (ret != E_NO_ERROR) {
-//        PR_ERROR("ble_command_init failed %d", ret);
-//        pmic_led_red(1);
-//    }
-
-	//ret = MXC_SYS_GetUSN(device_info.device_serial_num.max32666, sizeof(device_info.device_serial_num.max32666));
 	uint8_t checksum[MXC_SYS_USN_CHECKSUM_LEN];
     ret = MXC_SYS_GetUSN(device_info.device_serial_num.max32666, checksum);
 
@@ -316,10 +274,6 @@ int main(void)
             device_info.device_serial_num.max32666[12]);
     PR_INFO("MAX32666 Serial number: %s", usn_string);
 
-//    snprintf(mac_string, sizeof(mac_string) - 1, "%02X:%02X:%02X:%02X:%02X:%02X",
-//            device_info.ble_mac[5], device_info.ble_mac[4], device_info.ble_mac[3],
-//            device_info.ble_mac[2], device_info.ble_mac[1], device_info.ble_mac[0]);
-//    PR_INFO("MAX32666 BLE MAC: %s", mac_string);
 
     /* Select USB-Type-C Debug Connection to MAX78000-Video on IO expander */
     if ((ret = expander_select_debugger(DEBUGGER_SELECT_MAX78000_VIDEO)) != E_NO_ERROR) {
@@ -430,9 +384,7 @@ int main(void)
             lcd_drawImage(adi_logo);
             pmic_led_red(1);
             while(1) {
-//                if (device_settings.enable_ble && device_status.ble_connected) {
-//                    ble_command_worker();
-//                }
+
                 expander_worker();
 
                 if (lcd_data.refresh_screen && !spi_dma_busy_flag(MAX32666_LCD_DMA_CHANNEL)) {
@@ -523,16 +475,8 @@ static void run_application(void)
                     video_frame_color = WHITE;
                 }
 
-//                if (device_settings.enable_ble_send_classification && device_status.ble_connected) {
-//                    ble_command_send_single_packet(BLE_COMMAND_GET_MAX78000_VIDEO_CLASSIFICATION_RES,
-//                        sizeof(device_status.classification_video), (uint8_t *) &device_status.classification_video);
-//                }
                 break;
             case QSPI_PACKET_TYPE_VIDEO_FACEID_EMBED_UPDATE_RES:
-//                if (device_status.ble_connected) {
-//                    ble_command_send_single_packet(BLE_COMMAND_FACEID_EMBED_UPDATE_RES,
-//                        sizeof(device_status.faceid_embed_update_status), (uint8_t *) &device_status.faceid_embed_update_status);
-//                }
                 qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_FACEID_SUBJECTS_CMD);
                 lcd_notification(GREEN, "FaceID signature updated");
                 break;
@@ -547,9 +491,6 @@ static void run_application(void)
             }
         }
 
-
-       // PR_INFO("LCD:%d VIDEO:%d CNN:%d AUDIO:%d",device_settings.enable_lcd, device_settings.enable_max78000_video
-       // 		,device_settings.enable_max78000_video_cnn, device_settings.enable_max78000_audio);
         // Handle Audio QSPI RX
         if (qspi_master_audio_rx_worker(&qspi_packet_type_rx) == E_NO_ERROR) {
             switch(qspi_packet_type_rx) {
@@ -585,13 +526,11 @@ static void run_application(void)
                     } else if (strncmp(device_status.classification_audio.result, "GO", 2) == 0) {
                     	PR_INFO("GO");
                         //Do nothing
-                    	/*device_settings.enable_max78000_video_cnn = 1;
-                        qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_ENABLE_CNN_CMD);*/
+
                     } else if(strncmp(device_status.classification_audio.result, "STOP", 4) == 0) {
                     	PR_INFO("STOP");
                         //Do nothing
-                        //device_settings.enable_max78000_video_cnn = 0;
-                        //qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_DISABLE_CNN_CMD);
+
 
                     }
                 }
@@ -615,18 +554,9 @@ static void run_application(void)
             record_embeddings(embeddings.embeddings_name,embeddings.embeddings_buffer);
         }
         if (device_settings.enable_max78000_video) {
-            /*
-            // If video is not available for a long time, draw logo and refresh periodically
-            if ((timer_ms_tick - timestamps.video_data_received) > LCD_NO_VIDEO_REFRESH_DURATION) {
-                timestamps.video_data_received = timer_ms_tick;
-                memcpy(lcd_data.buffer, adi_logo, sizeof(lcd_data.buffer));
-                snprintf(lcd_string_buff, sizeof(lcd_string_buff) - 1, "No video!");
-                fonts_putStringCentered(16, lcd_string_buff, &Font_11x18, RED, lcd_data.buffer);
-                lcd_data.refresh_screen = 1;
-            }
-*/
-        } else {
-
+            //PASS
+        } 
+        else {
             // If video is disabled, draw logo and refresh periodically
             if ((timer_ms_tick - timestamps.screen_drew) > LCD_VIDEO_DISABLE_REFRESH_DURATION) {
                 memcpy(lcd_data.buffer, adi_logo, sizeof(lcd_data.buffer));
@@ -706,7 +636,6 @@ static void run_application(void)
                         // Start video
                         MXC_Delay(MXC_DELAY_MSEC(1000));
                         device_settings.enable_max78000_video_cnn = 1;
-                       // qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_ENABLE_CNN_CMD);
                     }
                 }
 
@@ -717,8 +646,6 @@ static void run_application(void)
 
         // Button worker
         if(modes[0] && getting_name ){
-          //  MXC_Delay(20000);
-          //  qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_RECORD_EN);
             for (int try = 0; try < 3; try++) {
                 qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_GETTING_NAME_EN);
                 qspi_master_wait_video_int();
@@ -737,7 +664,6 @@ static void run_application(void)
             printf("name:%s\n",embeddings.embeddings_name);
             MXC_TS_RemoveAllButton();
         }
-        //key = MXC_TS_GetKey();
         if(modes[0] && !capture && !getting_name){
             snprintf(lcd_string_buff, sizeof(lcd_string_buff) - 1, "RECORD MODE");
             fonts_putStringCentered(150, lcd_string_buff, &Font_11x18, RED, lcd_data.buffer);
@@ -774,9 +700,7 @@ static void run_application(void)
                     qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_CAPTURE_ACCEPT);
                     qspi_master_wait_video_int();
                 }
-                //capture = 1;
                 PR_INFO("capture accepted")
-                // Start video
                 MXC_Delay(MXC_DELAY_MSEC(1000));
                 block_button_x = 0; 
             }
@@ -787,7 +711,6 @@ static void run_application(void)
                 }
                 capture = 0;
                 PR_INFO("capture discarded")
-                // Start video
                 MXC_Delay(MXC_DELAY_MSEC(1000));
                 block_button_x = 0; 
             }
@@ -796,15 +719,11 @@ static void run_application(void)
         }
         if(!modes[0] && (embeddings.capture_number!=0)){
             embeddings.capture_number =0;
-           // qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_RECORD_EN);
             getting_name = 1;
             find_names_number(names,&db_number);
         }         
         button_worker(modes);       
-        // USB worker
-//        usb_worker();
 
-        // Refresh LCD
         
         if (lcd_data.refresh_screen && device_settings.enable_lcd ) {
             while(spi_dma_busy_flag(MAX32666_LCD_DMA_CHANNEL)); //Wait for the dma
@@ -855,54 +774,7 @@ static int refresh_screen(void)
 
     if (device_settings.enable_lcd_statistics) {
 
-        //record_mode ^= 1;
-        /*
-        int line_pos = 3;
-
-        // LCD frame per seconds
-        snprintf(lcd_string_buff, sizeof(lcd_string_buff) - 1, "FPS:%.2f", (double)device_status.statistics.lcd_fps);
-        fonts_putString(3, line_pos, lcd_string_buff, &Font_7x10, MAGENTA, 0, 0, lcd_data.buffer);
-        line_pos += 12;
-
-        // CNN duration (MAX78000 Video CNN)
-        snprintf(lcd_string_buff, sizeof(lcd_string_buff) - 1, "VidCNN:%d us", device_status.statistics.max78000_video.cnn_duration_us);
-        fonts_putString(3, line_pos, lcd_string_buff, &Font_7x10, MAGENTA, 0, 0, lcd_data.buffer);
-        line_pos += 12;
-
-        // KWS duration (MAX78000 Audio CNN)
-        snprintf(lcd_string_buff, sizeof(lcd_string_buff) - 1, "KWS:%d us", device_status.statistics.max78000_audio.cnn_duration_us);
-        fonts_putString(3, line_pos, lcd_string_buff, &Font_7x10, MAGENTA, 0, 0, lcd_data.buffer);
-        line_pos += 12;
-
-        // Video camera capture duration (frame capture)
-        snprintf(lcd_string_buff, sizeof(lcd_string_buff) - 1, "VidCap:%d ms", device_status.statistics.max78000_video.capture_duration_us / 1000);
-        fonts_putString(3, line_pos, lcd_string_buff, &Font_7x10, MAGENTA, 0, 0, lcd_data.buffer);
-        line_pos += 12;
-
-        // Video communication duration (frame transfer from MAX78000 to MAX32666 over QSPI)
-        snprintf(lcd_string_buff, sizeof(lcd_string_buff) - 1, "VidComm:%d ms", device_status.statistics.max78000_video.communication_duration_us / 1000);
-        fonts_putString(3, line_pos, lcd_string_buff, &Font_7x10, MAGENTA, 0, 0, lcd_data.buffer);
-        line_pos += 12;
-
-//        // MAX78000 Video power
-//        snprintf(lcd_string_buff, sizeof(lcd_string_buff) - 1, "Vid:%d mW", device_status.statistics.max78000_video_cnn_power_mw);
-//        fonts_putString(3, line_pos, lcd_string_buff, &Font_7x10, MAGENTA, 0, 0, lcd_data.buffer);
-//        line_pos += 12;
-//
-//        // MAX78000 Audio power
-//        snprintf(lcd_string_buff, sizeof(lcd_string_buff) - 1, "Aud:%d mW", device_status.statistics.max78000_audio_cnn_power_mw);
-//        fonts_putString(3, line_pos, lcd_string_buff, &Font_7x10, MAGENTA, 0, 0, lcd_data.buffer);
-//        line_pos += 12;
-
-        if ((timestamps.screen_drew - timestamps.faceid_subject_names_received) < LCD_NOTIFICATION_DURATION) {
-            line_pos += 5;
-            for (int i = 0; i < device_status.faceid_embed_subject_names_size; i += strlen(&device_status.faceid_embed_subject_names[i]) + 1) {
-                snprintf(lcd_string_buff, sizeof(lcd_string_buff) - 1, "%s", &device_status.faceid_embed_subject_names[i]);
-                fonts_putString(3, line_pos, lcd_string_buff, &Font_7x10, CYAN, 0, 0, lcd_data.buffer);
-                line_pos += 12;
-            }
-        }
-        */
+        //Not available for the faceID demo
     }
 
     // Draw button in init screen
@@ -923,8 +795,6 @@ static int refresh_screen(void)
             } else {
                 strncpy(lcd_string_buff, device_status.classification_audio.result, sizeof(lcd_string_buff) - 1);
             }
-                //Do not print the audio classification result for the facedetection demo
-            //fonts_putStringCentered(3, lcd_string_buff, &Font_16x26, audio_string_color, lcd_data.buffer); 
         }
     } else {
         snprintf(lcd_string_buff, sizeof(lcd_string_buff) - 1, "Audio disabled");

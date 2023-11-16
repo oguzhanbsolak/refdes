@@ -215,7 +215,6 @@ int qspi_master_video_rx_worker(qspi_packet_type_e *qspi_packet_type_rx)
 
     switch(qspi_packet_header_rx.info.packet_type) {
     case QSPI_PACKET_TYPE_VIDEO_DATA_RES:
-        //if (qspi_packet_header_rx.info.packet_size != LCD_WIDTH * LCD_BYTE_PER_PIXEL) {
         if (qspi_packet_header_rx.info.packet_size != LCD_DATA_SIZE) {
             PR_ERROR("Invalid QSPI data len %u", qspi_packet_header_rx.info.packet_size);
             return E_INVALID;
@@ -231,7 +230,6 @@ int qspi_master_video_rx_worker(qspi_packet_type_e *qspi_packet_type_rx)
         break;
         
     case QSPI_PACKET_TYPE_VIDEO_EMBEDDING_VALUES:
-        //if (qspi_packet_header_rx.info.packet_size != LCD_WIDTH * LCD_BYTE_PER_PIXEL) {
         if (qspi_packet_header_rx.info.packet_size != 64) {
             PR_ERROR("Invalid QSPI data len %u", qspi_packet_header_rx.info.packet_size);
             return E_INVALID;
@@ -392,7 +390,6 @@ int qspi_master_video_rx_worker(qspi_packet_type_e *qspi_packet_type_rx)
     break;
     
     case QSPI_PACKET_TYPE_FACEDET_VIDEO_DATA_RES:
-        //if (qspi_packet_header_rx.info.packet_size != LCD_WIDTH * LCD_BYTE_PER_PIXEL) {
         if (qspi_packet_header_rx.info.packet_size != FACEDETECTION_DATA_SIZE) {
             PR_ERROR("Invalid QSPI data len %u", qspi_packet_header_rx.info.packet_size);
             return E_INVALID;
@@ -438,7 +435,6 @@ int qspi_master_video_rx_worker(qspi_packet_type_e *qspi_packet_type_rx)
     break;
     
     case QSPI_PACKET_TYPE_FACEDET_VIDEO_DATA_RES_FACEID:
-        //if (qspi_packet_header_rx.info.packet_size != LCD_WIDTH * LCD_BYTE_PER_PIXEL) {
         if (qspi_packet_header_rx.info.packet_size != FACEDETECTION_DATA_SIZE) {
             PR_ERROR("Invalid QSPI data len %u", qspi_packet_header_rx.info.packet_size);
             return E_INVALID;
