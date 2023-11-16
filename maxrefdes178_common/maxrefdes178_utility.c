@@ -37,7 +37,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include "maxrefdes178_utility.h"
-
+#include "rtc.h"
 
 //-----------------------------------------------------------------------------
 // Defines
@@ -62,6 +62,15 @@
 //-----------------------------------------------------------------------------
 // Function definitions
 //-----------------------------------------------------------------------------
+uint32_t GET_RTC_MS(void)
+{
+   uint32_t sec, ssec;
+
+    MXC_RTC_GetSeconds(&sec);
+    MXC_RTC_GetSubSeconds(&ssec);
+    return sec * 1000 + ((ssec * 125) >> 9);
+}
+
 uint16_t crc16_sw(uint8_t *data, uint8_t len)
 {
     uint16_t temp;

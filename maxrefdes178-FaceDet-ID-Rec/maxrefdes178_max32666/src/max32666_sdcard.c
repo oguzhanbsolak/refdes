@@ -61,6 +61,7 @@
 #include "max32666_lcd.h"
 #include "max32666_data.h" 
 #include "max32666_fonts.h"
+#include "max32666_embeddings.h"
 //-----------------------------------------------------------------------------
 // Defines
 //-----------------------------------------------------------------------------
@@ -69,7 +70,6 @@
 #define MESSAGE_MAX_LEN    256
 #define ERROR_MAX_LEN      20
 #define WORKING_BUFFER_LEN 4096
-#define DEFAULT_EMBS_NUM 42
 
 //-----------------------------------------------------------------------------
 // Typedefs
@@ -243,7 +243,7 @@ int find_names_number(char names[][7], int *number){
             ;
     }
     f_lseek(&database, 4); 
-    if ((err = f_read(&database, (char *)&names[DEFAULT_EMBS_NUM], *number*7, &bytes_read)) != FR_OK) {
+    if ((err = f_read(&database, names[DEFAULT_EMBS_NUM], *number*7, &bytes_read)) != FR_OK) {
         printf("ERROR reading file: %s\n", FF_ERRORS[err]);
         f_mount(NULL, "", 0);
         while (1)

@@ -30,50 +30,52 @@
  # ownership rights.
  #
  ###############################################################################
-"""Contains adapter implementations for MAX78000 EvKit to get CNN model output.
+"""Contains MAX78000 simulator implementations to get CNN model output.
 """
-from .ai85_facedet_simulator import Simulator #pylint: disable=relative-beyond-top-level
-
-
-class AI85Adapter:
+import numpy as np
+import torch
+import parse_qat_yaml
+from .ai85net_tinierssd_face import TinierSSDFace
+import ai85.ai8x as ai8x
+from .ai8x import set_device #pylint: disable=relative-beyond-top-level
+from distiller import apputils
+class Simulator:
     """
-    Adapter base class for MAX78000 devices to get network output.
+    MAX78000 Simulator.
     """
-    simulator = None
-    def __init__(self):
-        pass
+    model = None
 
-    def get_network_out(self, data):
-        """Returns output of the neural network on device."""
+    def __init__(self, checkpoint_path):
+        self.device = self.__get_device()
+        #load model
+        set_device(85, False, False)
+        self.model = TinierSSDFace(num_classes = 2, device = self.device)
+        qat_policy = parse_qat_yaml.parse("db_gen/model/qat_policy_face.yaml")
+        ai8x.fuse_bn_layers(self.model)
+        ai8x.initiate_qat(self.model, qat_policy)
+        self.model = apputils.load_lean_checkpoint(self.model, checkpoint_path, model_device=self.device)
+        #checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        #self.model.load_state_dict(checkpoint['state_dict'])
+        ai8x.update_model(self.model)
+        self.model = self.model.to(self.device)
+
+
+    def __get_device(self): #pylint: disable=no-self-use
+        device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        print('Running on device: {}'.format(device))
+        return device
+    
+
+    def get_model_out(self, data_in):
+        """Returns output of the neural network on device.""" 
+        set_device(85, False, False, verbose=False)
+        locs, scores = self.model(data_in)
+        return locs, scores
 
     def __del__(self):
-        pass
-
-
-class Facedet_AI85SimulatorAdapter(AI85Adapter):
-    """
-    Adapter for MAX78000 simulator.
-    """
-    def __init__(self, path_to_checkpoint):
-        super().__init__()
-        self.simulator = Simulator(path_to_checkpoint)
-
-    def get_network_out(self, data):
-        """Returns output of the neural network on device."""
-        return self.simulator.get_model_out(data)
-
-    def __del__(self):
-        if self.simulator is not None:
-            del self.simulator
-
-
-class AI85SpiAdapter(AI85Adapter):
-    """
-    Adapter for MAX78000 SPI interface.
-    """
-    def get_network_out(self, data):
-        """Returns output of the neural network on device."""
-        print('Not implemented yet!!')
-
-    def __del__(self):
-        pass
+        if self.model is not None:
+            del self.model
+        if self.device.type != 'cpu':
+            torch.cuda.empty_cache()
+    
+    

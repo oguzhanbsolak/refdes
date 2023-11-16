@@ -60,12 +60,7 @@ def create_db_from_folder(args):
     
     os.makedirs(args.db, exist_ok=True)
 
-    emb_array, recorded_subject = append_db_file_from_path(args.db, face_detector, ai85_adapter)    
-    if not np.any(emb_array):
-        print(f'Cannot create a DB file. No face could be detected from the images in folder ',
-              f'`{args.db}`')
-        return
-
+    emb_array, recorded_subject = append_db_file_from_path(args.db, face_detector, ai85_adapter)
     baseaddr = create_baseaddr_include_file(args.base)
     create_weights_include_file(emb_array, args.weights, baseaddr)
     create_embeddings_include_file(recorded_subject, args.emb)
@@ -83,7 +78,7 @@ def parse_arguments():
                         help='path for baseaddr header file')
     parser.add_argument('--emb', '-emb-path', type=str, default='include\max32666_embeddings.h',
                         help='path for embeddings header file')
-    parser.add_argument('--weights', '-weights-path', type=str, default='SDCardBinaries\weights_3.bin',
+    parser.add_argument('--weights', '-weights-path', type=str, default='..\SDCardBinaries\weights_3.bin',
                         help='path for weights header file')
 
     args = parser.parse_args()

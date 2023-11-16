@@ -108,6 +108,7 @@ int modes[1] ={0};
 int capture = 0;
 int record_flag = 0;
 int key = 0;
+int block_button_x = 0;
 static text_t label_text[] = {
     // info
     {(char*)"Face", 4},
@@ -463,20 +464,25 @@ static void run_application(void)
     qspi_packet_type_e qspi_packet_type_rx = 0;
     video_frame_color = WHITE;
     uint16_t touch_x1, touch_y1;
+    uint32_t loop_time = 0;
+    uint32_t refresh_time = 0;
     core0_icc(1);
     // Main application loop
     int db_number=0;
     char default_names[DEFAULT_EMBS_NUM][7] = DEFAULT_NAMES;
     // The code expects default embeddings from the user. 
     //The "db_gen" tool generates "weights_3.bin" and "max32666_embeddings.h" automatically. 
-    //"weights_3.bin" should be put into the SD Card.  
+    //"weights_3.bin" should be put into the SD Card.
+    #pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wstringop-truncation"  
 	for (int i = 0; i < DEFAULT_EMBS_NUM; i++){
 		strncpy((char*)names[i], default_names[i], 7);
 	}
-    find_names_number(&names,&db_number);
+    #pragma GCC diagnostic pop
+    find_names_number(names,&db_number);
     embeddings.capture_number = 0;
     while (1) {
-
+        loop_time = timer_ms_tick;
         // Handle Video QSPI RX
         if (qspi_master_video_rx_worker(&qspi_packet_type_rx) == E_NO_ERROR) {
             switch(qspi_packet_type_rx) {
@@ -713,9 +719,21 @@ static void run_application(void)
         if(modes[0] && getting_name ){
           //  MXC_Delay(20000);
           //  qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_RECORD_EN);
+            for (int try = 0; try < 3; try++) {
+                qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_GETTING_NAME_EN);
+                qspi_master_wait_video_int();
+            }
+            
+            MXC_Delay(MXC_DELAY_MSEC(500));            
             lcd_drawImage(lcd_data.buffer);
             get_name(&embeddings);
+            for (int try = 0; try < 3; try++) {
+                qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_GETTING_NAME_DSB);
+                qspi_master_wait_video_int();
+            }
+            MXC_Delay(MXC_DELAY_MSEC(500));
             getting_name = 0;
+                        
             printf("name:%s\n",embeddings.embeddings_name);
             MXC_TS_RemoveAllButton();
         }
@@ -730,7 +748,10 @@ static void run_application(void)
             lcd_data.refresh_screen = 1;
             key = MXC_TS_GetKey();
             if(key==1){
-                qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_CAPTURE_EN);
+                for (int try = 0; try < 3; try++) {
+                    qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_CAPTURE_EN);
+                    qspi_master_wait_video_int();
+                }
                 capture = 1;
                 PR_INFO("capture started");
                 MXC_Delay(MXC_DELAY_MSEC(1000));
@@ -739,6 +760,7 @@ static void run_application(void)
         }
         
         if(modes[0] && capture){
+            block_button_x = 1;
             snprintf(lcd_string_buff, sizeof(lcd_string_buff) - 1, "OK");
             fonts_putString(35, 200, lcd_string_buff, &Font_16x26, GREEN, 0, 0, lcd_data.buffer);
             MXC_TS_AddButton(15,180,110,240,2);
@@ -748,38 +770,52 @@ static void run_application(void)
             lcd_data.refresh_screen = 1;
             key = MXC_TS_GetKey();
             if(key==2){
-                qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_CAPTURE_ACCEPT);
+                for (int try = 0; try < 3; try++) {
+                    qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_CAPTURE_ACCEPT);
+                    qspi_master_wait_video_int();
+                }
                 //capture = 1;
                 PR_INFO("capture accepted")
                 // Start video
                 MXC_Delay(MXC_DELAY_MSEC(1000));
+                block_button_x = 0; 
             }
             if(key==3){
-                qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_CAPTURE_DISCARD);
+                for (int try = 0; try < 3; try++) {
+                    qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_CAPTURE_DISCARD);
+                    qspi_master_wait_video_int();
+                }
                 capture = 0;
                 PR_INFO("capture discarded")
                 // Start video
                 MXC_Delay(MXC_DELAY_MSEC(1000));
+                block_button_x = 0; 
             }
-            MXC_TS_RemoveAllButton();           
+            MXC_TS_RemoveAllButton();
+                      
         }
         if(!modes[0] && (embeddings.capture_number!=0)){
             embeddings.capture_number =0;
            // qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_RECORD_EN);
             getting_name = 1;
-            find_names_number(&names,&db_number);
+            find_names_number(names,&db_number);
         }         
         button_worker(modes);       
         // USB worker
 //        usb_worker();
 
         // Refresh LCD
-        if (lcd_data.refresh_screen && device_settings.enable_lcd && !spi_dma_busy_flag(MAX32666_LCD_DMA_CHANNEL)) {
+        
+        if (lcd_data.refresh_screen && device_settings.enable_lcd ) {
+            while(spi_dma_busy_flag(MAX32666_LCD_DMA_CHANNEL)); //Wait for the dma
             refresh_screen();
+            PR_INFO("LCD refresh_time: %d ms", timer_ms_tick - refresh_time);
+            refresh_time = timer_ms_tick;
         }
 
         // Sleep until an interrupt
         __WFI();
+         PR_INFO("Loop time: %d ms", timer_ms_tick - loop_time);
     }
 }
 

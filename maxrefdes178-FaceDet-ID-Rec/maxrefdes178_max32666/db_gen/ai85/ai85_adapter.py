@@ -32,9 +32,7 @@
  ###############################################################################
 """Contains adapter implementations for MAX78000 EvKit to get CNN model output.
 """
-import time
-from collections import Counter
-import numpy as np
+
 from .ai85_simulator import Simulator #pylint: disable=relative-beyond-top-level
 
 
@@ -68,4 +66,3 @@ class AI85SimulatorAdapter(AI85Adapter):
     def __del__(self):
         if self.simulator is not None:
             del self.simulator
-

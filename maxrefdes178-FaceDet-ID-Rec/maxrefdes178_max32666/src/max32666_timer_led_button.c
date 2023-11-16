@@ -72,7 +72,8 @@ volatile uint32_t timer_ms_tick = 0;
 volatile int button_x_int = 0;
 volatile int button_y_int = 0;
 volatile int button_power_int = 0;
-
+int record = 0;
+extern int block_button_x;
 
 //-----------------------------------------------------------------------------
 // Local function declarations
@@ -215,13 +216,28 @@ int led_worker(void)
 }
 
 int button_worker(int *modes)
-{
+{   
+    if (!device_settings.enable_max78000_video || block_button_x) {
+        button_x_int = 0; // if video is disabled, ignore button X
+    }
     if (button_x_int) {
         button_x_int = 0;
         modes[0] ^= 1;
         PR_INFO("button X pressed");
         MXC_Delay(20000);
-        qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_RECORD_EN);
+        if (!record) {
+            for (int try = 0; try < 3; try++) {
+                qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_RECORD_EN);
+                qspi_master_wait_video_int();
+            }
+            record = 1;
+        } else {
+            for (int try = 0; try < 3; try++) {
+                qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_RECORD_DSB);
+                qspi_master_wait_video_int();
+            }
+            record = 0;
+        }
         timestamps.activity_detected = timer_ms_tick;
 
 /*
@@ -236,6 +252,9 @@ int button_worker(int *modes)
         timestamps.faceid_subject_names_received = timer_ms_tick;
         */
     }
+    if (record) {
+        button_power_int = 0; // if video in record mode, ignore button power
+    }
 
     if (button_power_int) {
         button_power_int = 0;
@@ -243,8 +262,10 @@ int button_worker(int *modes)
         PR_INFO("button power pressed");
 
         device_settings.enable_max78000_video = 0;
-        qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_DISABLE_CMD);
-
+        for (int try = 0; try < 3; try++) {
+                qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_DISABLE_CMD);
+                qspi_master_wait_video_int();
+            }
         lcd_notification(MAGENTA, "Video disabled");
     }
 
