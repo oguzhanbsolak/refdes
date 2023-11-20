@@ -86,8 +86,10 @@ void power_off_timer(void);
 // Function definitions
 //-----------------------------------------------------------------------------
 void button_x_int_handler(void *cbdata)
-{
-    button_x_int = 1;
+{   
+    if (!block_button_x){
+        button_x_int = 1;
+    }
 }
 
 void button_power_int_handler(void *cbdata)
@@ -99,8 +101,11 @@ void button_power_int_handler(void *cbdata)
 //        printf("button power pressed\n");
         MXC_TMR_Stop(MAX32666_TIMER_BUTTON_POWER);
         MXC_TMR_Start(MAX32666_TIMER_BUTTON_POWER);
-
-        button_power_int = 1;
+        if (!record){
+            PR_INFO("button power pressed and record is 0");
+            button_power_int = 1;
+        }
+        
     }
 }
 
@@ -215,14 +220,14 @@ int led_worker(void)
     return E_NO_ERROR;
 }
 
-int button_worker(int *modes)
+int button_worker(void)
 {   
-    if (!device_settings.enable_max78000_video || block_button_x) {
+    if (!device_settings.enable_max78000_video) {
         button_x_int = 0; // if video is disabled, ignore button X
     }
     if (button_x_int) {
         button_x_int = 0;
-        modes[0] ^= 1;
+        //modes[0] ^= 1; Keep for debug
         PR_INFO("button X pressed");
         MXC_Delay(20000);
         if (!record) {
@@ -231,6 +236,7 @@ int button_worker(int *modes)
                 qspi_master_wait_video_int();
             }
             record = 1;
+            block_button_x = 1; // Until capture screen is displayed, block button X
         } else {
             for (int try = 0; try < 3; try++) {
                 qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_RECORD_DSB);
@@ -252,11 +258,8 @@ int button_worker(int *modes)
         timestamps.faceid_subject_names_received = timer_ms_tick;
         */
     }
-    if (record) {
-        button_power_int = 0; // if video in record mode, ignore button power
-    }
 
-    if (button_power_int) {
+    if (button_power_int && !record) {
         button_power_int = 0;
 
         PR_INFO("button power pressed");

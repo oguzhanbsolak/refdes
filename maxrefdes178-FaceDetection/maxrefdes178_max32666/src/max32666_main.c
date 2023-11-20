@@ -726,7 +726,7 @@ static void run_application(void)
         button_worker();
 
         // USB worker
-//        usb_worker();
+        //usb_worker();
 
         // Refresh LCD
         if (lcd_data.refresh_screen && device_settings.enable_lcd && !spi_dma_busy_flag(MAX32666_LCD_DMA_CHANNEL)) {

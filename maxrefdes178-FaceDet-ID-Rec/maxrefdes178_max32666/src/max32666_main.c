@@ -94,6 +94,7 @@ typedef struct {
 // Global variables
 //-----------------------------------------------------------------------------
 char names[1024][7]; // 1024 names of 6 bytes each, as we support 1024 people in the database
+extern int record;
 static volatile int core1_init_done = 0;
 static char lcd_string_buff[LCD_NOTIFICATION_MAX_SIZE] = {0};
 static char version_string[14] = {0};
@@ -104,7 +105,6 @@ static uint16_t video_frame_color;
 static uint16_t audio_string_color;
 int face_detected = 0;
 int getting_name = 1;
-int modes[1] ={0};
 int capture = 0;
 int record_flag = 0;
 int key = 0;
@@ -623,11 +623,11 @@ static void run_application(void)
         expander_worker();
 
         // Touch screen worker
-        if(!modes[0]){
+        if(!record){
             if (touch_worker(&touch_x1, &touch_y1) == E_NO_ERROR) {
 
                 // Check if init page start button is clicked
-                if (device_settings.enable_max78000_video == 0) {
+                if (!device_settings.enable_max78000_video) {
                     if ((LCD_START_BUTTON_X1 <= touch_x1) && (touch_x1 <= LCD_START_BUTTON_X2) &&
                         (LCD_START_BUTTON_Y1 <= touch_y1) && (touch_y1 <= LCD_START_BUTTON_Y2)) {
                         device_settings.enable_max78000_video = 1;
@@ -645,26 +645,27 @@ static void run_application(void)
         }
 
         // Button worker
-        if(modes[0] && getting_name ){
+        if(record && getting_name){
             for (int try = 0; try < 3; try++) {
                 qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_GETTING_NAME_EN);
                 qspi_master_wait_video_int();
             }
             
-            MXC_Delay(MXC_DELAY_MSEC(500));            
+            //MXC_Delay(MXC_DELAY_MSEC(500)); Reduce delay exp.
             lcd_drawImage(lcd_data.buffer);
             get_name(&embeddings);
             for (int try = 0; try < 3; try++) {
                 qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_GETTING_NAME_DSB);
                 qspi_master_wait_video_int();
             }
-            MXC_Delay(MXC_DELAY_MSEC(500));
+            //MXC_Delay(MXC_DELAY_MSEC(500)); Reduce delay exp.
             getting_name = 0;
                         
             printf("name:%s\n",embeddings.embeddings_name);
             MXC_TS_RemoveAllButton();
         }
-        if(modes[0] && !capture && !getting_name){
+        if(record && !capture && !getting_name){
+            block_button_x = 0; //Enable exit button
             snprintf(lcd_string_buff, sizeof(lcd_string_buff) - 1, "RECORD MODE");
             fonts_putStringCentered(150, lcd_string_buff, &Font_11x18, RED, lcd_data.buffer);
             snprintf(lcd_string_buff, sizeof(lcd_string_buff) - 1, "CAPTURE");
@@ -680,13 +681,12 @@ static void run_application(void)
                 }
                 capture = 1;
                 PR_INFO("capture started");
-                MXC_Delay(MXC_DELAY_MSEC(1000));
+                //MXC_Delay(MXC_DELAY_MSEC(1000)); Reduce delay exp.
             }
             MXC_TS_RemoveAllButton();
         }
         
-        if(modes[0] && capture){
-            block_button_x = 1;
+        if(record && capture){
             snprintf(lcd_string_buff, sizeof(lcd_string_buff) - 1, "OK");
             fonts_putString(35, 200, lcd_string_buff, &Font_16x26, GREEN, 0, 0, lcd_data.buffer);
             MXC_TS_AddButton(15,180,110,240,2);
@@ -701,8 +701,8 @@ static void run_application(void)
                     qspi_master_wait_video_int();
                 }
                 PR_INFO("capture accepted")
-                MXC_Delay(MXC_DELAY_MSEC(1000));
-                block_button_x = 0; 
+                //MXC_Delay(MXC_DELAY_MSEC(1000)); Reduce delay exp.
+                
             }
             if(key==3){
                 for (int try = 0; try < 3; try++) {
@@ -711,18 +711,18 @@ static void run_application(void)
                 }
                 capture = 0;
                 PR_INFO("capture discarded")
-                MXC_Delay(MXC_DELAY_MSEC(1000));
-                block_button_x = 0; 
+                //MXC_Delay(MXC_DELAY_MSEC(1000)); Reduce delay exp.
+                
             }
             MXC_TS_RemoveAllButton();
                       
         }
-        if(!modes[0] && (embeddings.capture_number!=0)){
+        if(!record && (embeddings.capture_number!=0)){
             embeddings.capture_number =0;
             getting_name = 1;
             find_names_number(names,&db_number);
         }         
-        button_worker(modes);       
+        button_worker();       
 
         
         if (lcd_data.refresh_screen && device_settings.enable_lcd ) {
@@ -757,13 +757,13 @@ static int refresh_screen(void)
     if (device_settings.enable_max78000_video && device_settings.enable_max78000_video_cnn) {
         if (device_status.classification_video.classification != CLASSIFICATION_NOTHING) {
             if(device_status.classification_video.classification != CLASSIFICATION_UNKNOWN){
-                if(!modes[0]){
+                if(!record){
                     strncpy(lcd_string_buff, names[device_status.classification_video.max_embed_index], sizeof(lcd_string_buff) - 1);
                     fonts_putStringCentered(LCD_HEIGHT - 29, lcd_string_buff, &Font_16x26, video_string_color, lcd_data.buffer);
                 }
             }
             else{
-                if(!modes[0]){
+                if(!record){
                     strncpy(lcd_string_buff, "UNKNOWN", sizeof(lcd_string_buff) - 1);
                     fonts_putStringCentered(LCD_HEIGHT - 29, lcd_string_buff, &Font_16x26, video_string_color, lcd_data.buffer);    
                 }            
@@ -989,7 +989,7 @@ uint8_t class_idx, x1, x2, y1, y2;
         // Show detected digit
         fonts_putString(x1+BOX_THICKNESS, y1+BOX_THICKNESS, lcd_string_buff, &Font_16x26, GREEN, 0, 0, lcd_data.buffer);
         PR_DEBUG("Face Detected!");
-        if(modes[0]){
+        if(record){
             if(capture){
                 cnn_2_load_weights_from_SD();
             }
