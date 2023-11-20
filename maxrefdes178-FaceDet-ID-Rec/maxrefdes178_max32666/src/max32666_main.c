@@ -651,14 +651,12 @@ static void run_application(void)
                 qspi_master_wait_video_int();
             }
             
-            //MXC_Delay(MXC_DELAY_MSEC(500)); Reduce delay exp.
             lcd_drawImage(lcd_data.buffer);
             get_name(&embeddings);
             for (int try = 0; try < 3; try++) {
                 qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_GETTING_NAME_DSB);
                 qspi_master_wait_video_int();
             }
-            //MXC_Delay(MXC_DELAY_MSEC(500)); Reduce delay exp.
             getting_name = 0;
                         
             printf("name:%s\n",embeddings.embeddings_name);
@@ -681,7 +679,6 @@ static void run_application(void)
                 }
                 capture = 1;
                 PR_INFO("capture started");
-                //MXC_Delay(MXC_DELAY_MSEC(1000)); Reduce delay exp.
             }
             MXC_TS_RemoveAllButton();
         }
@@ -701,7 +698,6 @@ static void run_application(void)
                     qspi_master_wait_video_int();
                 }
                 PR_INFO("capture accepted")
-                //MXC_Delay(MXC_DELAY_MSEC(1000)); Reduce delay exp.
                 
             }
             if(key==3){
@@ -711,7 +707,6 @@ static void run_application(void)
                 }
                 capture = 0;
                 PR_INFO("capture discarded")
-                //MXC_Delay(MXC_DELAY_MSEC(1000)); Reduce delay exp.
                 
             }
             MXC_TS_RemoveAllButton();

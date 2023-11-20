@@ -227,7 +227,6 @@ int button_worker(void)
     }
     if (button_x_int) {
         button_x_int = 0;
-        //modes[0] ^= 1; Keep for debug
         PR_INFO("button X pressed");
         MXC_Delay(20000);
         if (!record) {
