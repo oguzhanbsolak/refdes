@@ -1,6 +1,6 @@
 ###################################################################################################
 #
-# Copyright (C) 2020-2022 Maxim Integrated Products, Inc. All Rights Reserved.
+# Copyright (C) 2020-2023 Maxim Integrated Products, Inc. All Rights Reserved.
 #
 # Maxim Integrated Products, Inc. Default Copyright Notice:
 # https://www.maximintegrated.com/en/aboutus/legal/copyrights.html
@@ -67,16 +67,11 @@ class ResidualBottleneck(nn.Module):
         else:
             self.conv1 = ai8x.FusedConv2dBNReLU(in_channels, hidden_channels, 1, padding=0,
                                                 bias=bias, **kwargs)
-            #self.conv1 = ai8x.FusedConv2dReLU(in_channels, hidden_channels, 1, padding=0,
-            #                                    bias=bias, **kwargs)
         if stride == 1:
             if depthwise_bias:
                 self.conv2 = ai8x.FusedDepthwiseConv2dBNReLU(hidden_channels, hidden_channels, 3,
                                                              padding=1, stride=stride,
                                                              bias=depthwise_bias, **kwargs)
-                #self.conv2 = ai8x.FusedDepthwiseConv2dReLU(hidden_channels, hidden_channels, 3,
-                #                                            padding=1, stride=stride,
-                #                                            bias=depthwise_bias, **kwargs)
             else:
                 self.conv2 = ai8x.FusedDepthwiseConv2dReLU(hidden_channels, hidden_channels, 3,
                                                            padding=1, stride=stride,
@@ -90,12 +85,6 @@ class ResidualBottleneck(nn.Module):
                                                                     pool_stride=stride,
                                                                     bias=depthwise_bias,
                                                                     **kwargs)
-                #self.conv2 = ai8x.FusedMaxPoolDepthwiseConv2dReLU(hidden_channels,
-                #                                                    hidden_channels,
-                #                                                    3, padding=1, pool_size=stride,
-                #                                                    pool_stride=stride,
-                #                                                    bias=depthwise_bias,
-                #                                                    **kwargs)
             else:
                 self.conv2 = ai8x.FusedMaxPoolDepthwiseConv2dReLU(hidden_channels,
                                                                   hidden_channels,
@@ -105,7 +94,7 @@ class ResidualBottleneck(nn.Module):
                                                                   **kwargs)
 
         self.conv3 = ai8x.FusedConv2dBN(hidden_channels, out_channels, 1, bias=bias, **kwargs)
-        #self.conv3 = ai8x.Conv2d(hidden_channels, out_channels, 1, bias=bias, **kwargs)
+
         if (stride == 1) and (in_channels == out_channels):
             self.resid = ai8x.Add()
         else:
@@ -127,9 +116,10 @@ class ResidualBottleneck(nn.Module):
         return self.resid(y, x)
 
 
-class FullConvResidualBottleneck(nn.Module):
+class ConvResidualBottleneck(nn.Module):
     """
-    AI8X - Residual Bottleneck Layer with full convolution.
+    AI8X module based on Residual Bottleneck Layer.
+    Depthwise convolution is replaced with standard convolution.
     This module uses ReLU activation not ReLU6 as the original study suggests [1],
     because of MAX7800X capabilities.
 
@@ -154,16 +144,12 @@ class FullConvResidualBottleneck(nn.Module):
         else:
             self.conv1 = ai8x.FusedConv2dBNReLU(in_channels, hidden_channels, 1, padding=0,
                                                 bias=bias, **kwargs)
-            #self.conv1 = ai8x.FusedConv2dReLU(in_channels, hidden_channels, 1, padding=0,
-            #                                    bias=bias, **kwargs)
         if stride == 1:
             if depthwise_bias:
                 self.conv2 = ai8x.FusedConv2dBN(hidden_channels, out_channels, 3,
                                                              padding=1, stride=stride,
                                                              bias=depthwise_bias, **kwargs)
-                #self.conv2 = ai8x.FusedDepthwiseConv2dReLU(hidden_channels, hidden_channels, 3,
-                #                                            padding=1, stride=stride,
-                #                                            bias=depthwise_bias, **kwargs)
+
             else:
                 self.conv2 = ai8x.Conv2d(hidden_channels, out_channels, 3,
                                                            padding=1, stride=stride,
@@ -177,12 +163,7 @@ class FullConvResidualBottleneck(nn.Module):
                                                                     pool_stride=stride,
                                                                     bias=depthwise_bias,
                                                                     **kwargs)
-                #self.conv2 = ai8x.FusedMaxPoolDepthwiseConv2dReLU(hidden_channels,
-                #                                                    hidden_channels,
-                #                                                    3, padding=1, pool_size=stride,
-                #                                                    pool_stride=stride,
-                #                                                    bias=depthwise_bias,
-                #                                                    **kwargs)
+
             else:
                 self.conv2 = ai8x.FusedMaxPoolConv2d(hidden_channels,
                                                                   out_channels,
@@ -191,8 +172,6 @@ class FullConvResidualBottleneck(nn.Module):
                                                                   bias=depthwise_bias,
                                                                   **kwargs)
 
-        #self.conv3 = ai8x.FusedConv2dBN(hidden_channels, out_channels, 1, bias=bias, **kwargs)
-        #self.conv3 = ai8x.Conv2d(hidden_channels, out_channels, 1, bias=bias, **kwargs)
         if (stride == 1) and (in_channels == out_channels):
             self.resid = ai8x.Add()
         else:
@@ -210,7 +189,6 @@ class FullConvResidualBottleneck(nn.Module):
         """Forward prop"""
         y = self.conv1(x)
         y = self.conv2(y)
-        #y = self.conv3(y)
         return self.resid(y, x)
 
 

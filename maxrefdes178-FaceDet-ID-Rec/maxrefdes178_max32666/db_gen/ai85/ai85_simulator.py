@@ -36,7 +36,7 @@ import numpy as np
 import torch
 
 import parse_qat_yaml
-import ai85.ai85netmobilenetfacenet_112 as ai85netmobilefacenet_112
+import ai85.ai85net_faceid_112 as ai85netfaceidnet_112
 import ai85.ai8x as ai8x
 from .ai8x import set_device #pylint: disable=relative-beyond-top-level
 import torchvision
@@ -51,7 +51,7 @@ class Simulator:
         self.device = self.__get_device()
         #load model
         set_device(85, True, True)
-        self.model = ai85netmobilefacenet_112.ai85netmobilefacenet_112(bias = True).to(self.device)
+        self.model = ai85netfaceidnet_112.ai85faceidnet_112(bias = True, num_classes=None).to(self.device)
         ai8x.fuse_bn_layers(self.model)
         #checkpoint = torch.load(checkpoint_path, map_location=self.device)
         self.model = apputils.load_lean_checkpoint(self.model, checkpoint_path, model_device=self.device)

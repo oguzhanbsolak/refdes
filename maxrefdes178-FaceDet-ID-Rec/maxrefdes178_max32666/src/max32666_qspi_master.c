@@ -226,9 +226,9 @@ int qspi_master_video_rx_worker(qspi_packet_type_e *qspi_packet_type_rx)
         spi_dma_wait(MAX32666_QSPI_DMA_CHANNEL, MAX32666_QSPI);
         GPIO_SET(video_cs_pin);
         PR_DEBUG("video Cam %u", qspi_packet_header_rx.info.packet_size);
-		
+
         break;
-        
+
     case QSPI_PACKET_TYPE_VIDEO_EMBEDDING_VALUES:
         if (qspi_packet_header_rx.info.packet_size != 64) {
             PR_ERROR("Invalid QSPI data len %u", qspi_packet_header_rx.info.packet_size);
@@ -241,9 +241,9 @@ int qspi_master_video_rx_worker(qspi_packet_type_e *qspi_packet_type_rx)
         spi_dma_wait(MAX32666_QSPI_DMA_CHANNEL, MAX32666_QSPI);
         GPIO_SET(video_cs_pin);
         PR_DEBUG("video Cam %u", qspi_packet_header_rx.info.packet_size);
-		
-        
-        break;			
+
+
+        break;
     case QSPI_PACKET_TYPE_VIDEO_ML_RES:
         PR_INFO("ML QSPI data len %u", qspi_packet_header_rx.info.packet_size);
         GPIO_CLR(video_cs_pin);
@@ -252,9 +252,9 @@ int qspi_master_video_rx_worker(qspi_packet_type_e *qspi_packet_type_rx)
         spi_dma_wait(MAX32666_QSPI_DMA_CHANNEL, MAX32666_QSPI);
         GPIO_SET(video_cs_pin);
 
-        break; 
+        break;
     case QSPI_PACKET_TYPE_VIDEO_CLASSIFICATION_RES:
-    
+
         if (qspi_packet_header_rx.info.packet_size != sizeof(classification_result_t)) {
             PR_ERROR("Invalid QSPI data len %u", qspi_packet_header_rx.info.packet_size);
             return E_INVALID;
@@ -265,7 +265,7 @@ int qspi_master_video_rx_worker(qspi_packet_type_e *qspi_packet_type_rx)
         spi_dma(MAX32666_QSPI_DMA_CHANNEL, MAX32666_QSPI, NULL, (uint8_t *) &device_status.classification_video, qspi_packet_header_rx.info.packet_size, MAX32666_QSPI_DMA_REQSEL_SPIRX, NULL);
         spi_dma_wait(MAX32666_QSPI_DMA_CHANNEL, MAX32666_QSPI);
         GPIO_SET(video_cs_pin);
-        
+
         break;
     case QSPI_PACKET_TYPE_VIDEO_STATISTICS_RES:
         if (qspi_packet_header_rx.info.packet_size != sizeof(max78000_statistics_t)) {
@@ -388,7 +388,7 @@ int qspi_master_video_rx_worker(qspi_packet_type_e *qspi_packet_type_rx)
     case QSPI_PACKET_TYPE_VIDEO_SENDING_EMBEDDINGS_FLAG:
         PR_INFO("embeddings flag");
     break;
-    
+
     case QSPI_PACKET_TYPE_FACEDET_VIDEO_DATA_RES:
         if (qspi_packet_header_rx.info.packet_size != FACEDETECTION_DATA_SIZE) {
             PR_ERROR("Invalid QSPI data len %u", qspi_packet_header_rx.info.packet_size);
@@ -397,7 +397,7 @@ int qspi_master_video_rx_worker(qspi_packet_type_e *qspi_packet_type_rx)
 
         GPIO_CLR(video_cs_pin);
         MXC_Delay(MXC_DELAY_USEC(QSPI_CS_ASSERT_WAIT));
-        spi_dma(MAX32666_QSPI_DMA_CHANNEL, MAX32666_QSPI, NULL, (uint8_t *)(lcd_data.facedet_buffer), qspi_packet_header_rx.info.packet_size, MAX32666_QSPI_DMA_REQSEL_SPIRX, NULL);        
+        spi_dma(MAX32666_QSPI_DMA_CHANNEL, MAX32666_QSPI, NULL, (uint8_t *)(lcd_data.facedet_buffer), qspi_packet_header_rx.info.packet_size, MAX32666_QSPI_DMA_REQSEL_SPIRX, NULL);
         spi_dma_wait(MAX32666_QSPI_DMA_CHANNEL, MAX32666_QSPI);
         GPIO_SET(video_cs_pin);
         PR_DEBUG("video Cam %u", qspi_packet_header_rx.info.packet_size);
@@ -413,7 +413,7 @@ int qspi_master_video_rx_worker(qspi_packet_type_e *qspi_packet_type_rx)
                 lcd_data.buffer[(j  * LCD_BYTE_PER_PIXEL) +  (i * LCD_WIDTH * LCD_BYTE_PER_PIXEL) + 1] = lcd_data.facedet_buffer[(x_loc  * LCD_BYTE_PER_PIXEL) + (y_loc * LCD_BYTE_PER_PIXEL * FACEDETECTION_WIDTH) + 1];
             }
         }
- 
+
 
         break;
 
@@ -424,16 +424,16 @@ int qspi_master_video_rx_worker(qspi_packet_type_e *qspi_packet_type_rx)
         }
         GPIO_CLR(video_cs_pin);
         MXC_Delay(MXC_DELAY_USEC(QSPI_CS_ASSERT_WAIT));
-        spi_dma(MAX32666_QSPI_DMA_CHANNEL, MAX32666_QSPI, NULL, (uint8_t *)(lcd_data.facedet_buffer), qspi_packet_header_rx.info.packet_size, MAX32666_QSPI_DMA_REQSEL_SPIRX, NULL);        
+        spi_dma(MAX32666_QSPI_DMA_CHANNEL, MAX32666_QSPI, NULL, (uint8_t *)(lcd_data.facedet_buffer), qspi_packet_header_rx.info.packet_size, MAX32666_QSPI_DMA_REQSEL_SPIRX, NULL);
         spi_dma_wait(MAX32666_QSPI_DMA_CHANNEL, MAX32666_QSPI);
         GPIO_SET(video_cs_pin);
-        PR_DEBUG("video Cam %u", qspi_packet_header_rx.info.packet_size); 
+        PR_DEBUG("video Cam %u", qspi_packet_header_rx.info.packet_size);
         box_data.y1 = lcd_data.facedet_buffer[0];
         box_data.x1 = lcd_data.facedet_buffer[1];
         box_data.box_width = lcd_data.facedet_buffer[2];
-        box_data.box_height  = lcd_data.facedet_buffer[3];  
+        box_data.box_height  = lcd_data.facedet_buffer[3];
     break;
-    
+
     case QSPI_PACKET_TYPE_FACEDET_VIDEO_DATA_RES_FACEID:
         if (qspi_packet_header_rx.info.packet_size != FACEDETECTION_DATA_SIZE) {
             PR_ERROR("Invalid QSPI data len %u", qspi_packet_header_rx.info.packet_size);
@@ -447,21 +447,44 @@ int qspi_master_video_rx_worker(qspi_packet_type_e *qspi_packet_type_rx)
         GPIO_SET(video_cs_pin);
         PR_DEBUG("video Cam %u", qspi_packet_header_rx.info.packet_size);        
         uint8_t *data;
+        
+        int x1, y1;
+        if (box_data.x1 > FACEDETECTION_WIDTH) {
+            x1 =  box_data.x1 - 255;
+        }
+        else {
+            x1 = box_data.x1;
+        }
+        if (box_data.y1 > FACEDETECTION_HEIGHT) {
+            y1 = box_data.y1 - 255;
+        }
+        else {
+            y1 = box_data.y1;
+        }
+
+        PR_DEBUG("box_data.x1 %d", box_data.x1);
+        PR_DEBUG("box_data.y1 %d", box_data.y1);
+        PR_DEBUG("int x1 %d", x1);
+        PR_DEBUG("int y1 %d", y1);
         //INTERPOLATION TO 240x240 FROM 224x168
         for (int i = 0; i < LCD_HEIGHT; i++) {
             y_prime = ((float)(i)/(LCD_HEIGHT)) * box_data.box_height;
             y_loc = (uint8_t)(MIN(round(y_prime), box_data.box_height - 1));
-            data = lcd_data.facedet_buffer + box_data.y1 * FACEDETECTION_WIDTH * LCD_BYTE_PER_PIXEL + y_loc * LCD_BYTE_PER_PIXEL * FACEDETECTION_WIDTH;
-            data += box_data.x1 * LCD_BYTE_PER_PIXEL;
+            data = lcd_data.facedet_buffer + y1 * FACEDETECTION_WIDTH * LCD_BYTE_PER_PIXEL + y_loc * LCD_BYTE_PER_PIXEL * FACEDETECTION_WIDTH;
+            data += x1 * LCD_BYTE_PER_PIXEL;
             for (int j = 0; j < LCD_WIDTH ; j++) {
                 x_prime = ((float)(j)/(LCD_WIDTH)) * box_data.box_width ;
                 x_loc = (uint8_t)(MIN(round(x_prime), box_data.box_width - 1));
-
-                lcd_data.buffer[(j  * LCD_BYTE_PER_PIXEL ) + (i * LCD_WIDTH * LCD_BYTE_PER_PIXEL)] = data[(x_loc * LCD_BYTE_PER_PIXEL)];
-                lcd_data.buffer[(j  * LCD_BYTE_PER_PIXEL) +  (i * LCD_WIDTH * LCD_BYTE_PER_PIXEL) + 1] = data[(x_loc  * LCD_BYTE_PER_PIXEL) + 1];
+                if ((x1 + x_loc < 0) || (y1 + y_loc < 0) || (x1 + x_loc >= FACEDETECTION_WIDTH) || (y1 + y_loc >= FACEDETECTION_HEIGHT)) {
+                    lcd_data.buffer[(j  * LCD_BYTE_PER_PIXEL ) + (i * LCD_WIDTH * LCD_BYTE_PER_PIXEL)] = 0;
+                    lcd_data.buffer[(j  * LCD_BYTE_PER_PIXEL) +  (i * LCD_WIDTH * LCD_BYTE_PER_PIXEL) + 1] = 0;
+                }
+                else {
+                    lcd_data.buffer[(j  * LCD_BYTE_PER_PIXEL ) + (i * LCD_WIDTH * LCD_BYTE_PER_PIXEL)] = data[(x_loc * LCD_BYTE_PER_PIXEL)];;
+                    lcd_data.buffer[(j  * LCD_BYTE_PER_PIXEL) +  (i * LCD_WIDTH * LCD_BYTE_PER_PIXEL) + 1] = data[(x_loc  * LCD_BYTE_PER_PIXEL) + 1];
+                }
             }
         }
- 
 
         break;
     default:

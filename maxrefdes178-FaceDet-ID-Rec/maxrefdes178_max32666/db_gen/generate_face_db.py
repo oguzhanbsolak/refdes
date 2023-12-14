@@ -39,13 +39,12 @@ import numpy as np
 import os
 import os.path as path
 from ai85.ai85_adapter import AI85SimulatorAdapter
-from ai85.ai85_facedet_adapter import Facedet_AI85SimulatorAdapter
+from hawk_eyes.face import RetinaFace
 
 from utils import append_db_file_from_path, create_weights_include_file, create_embeddings_include_file, create_baseaddr_include_file
 
 CURRENT_DIR = path.abspath(path.dirname(path.abspath(__file__)))
-MODEL_PATH = path.join(CURRENT_DIR, 'model', 'ai85-faceid-mobface-q.pth.tar')
-FACEDET_PATH = path.join(CURRENT_DIR, 'model', 'ai85-facedetection3-qat8.pth.tar')
+MODEL_PATH = path.join(CURRENT_DIR, 'model', 'ai85-faceid_112-qat-q.pth.tar')
 
 
 def create_db_from_folder(args):
@@ -56,11 +55,12 @@ def create_db_from_folder(args):
 
 
     ai85_adapter = AI85SimulatorAdapter(MODEL_PATH)
-    face_detector = Facedet_AI85SimulatorAdapter(FACEDET_PATH)
+    face_detector = RetinaFace(model_name='retina_l', conf=0.1)
     
     os.makedirs(args.db, exist_ok=True)
 
     emb_array, recorded_subject = append_db_file_from_path(args.db, face_detector, ai85_adapter)
+
     baseaddr = create_baseaddr_include_file(args.base)
     create_weights_include_file(emb_array, args.weights, baseaddr)
     create_embeddings_include_file(recorded_subject, args.emb)

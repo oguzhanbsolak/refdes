@@ -791,10 +791,12 @@ static int refresh_screen(void)
                 strncpy(lcd_string_buff, device_status.classification_audio.result, sizeof(lcd_string_buff) - 1);
             }
         }
-    } else {
+    }
+    //Not available for the faceID demo
+    /*else {
         snprintf(lcd_string_buff, sizeof(lcd_string_buff) - 1, "Audio disabled");
         fonts_putStringCentered(3, lcd_string_buff, &Font_11x18, RED, lcd_data.buffer);
-    }
+    }*/
 
     if ((timestamps.screen_drew - timestamps.notification_received) < LCD_NOTIFICATION_DURATION) {
         if (strlen(lcd_data.notification) < (LCD_WIDTH / Font_11x18.width)) {

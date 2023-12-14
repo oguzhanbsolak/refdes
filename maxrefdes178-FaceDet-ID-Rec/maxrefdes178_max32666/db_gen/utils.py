@@ -40,7 +40,7 @@ from collections import defaultdict
 import numpy as np
 
 
-from matplotlib.image import imread
+from cv2 import imread
 from PIL import Image, ExifTags
 import torch
 import torchvision.transforms.functional as VF
@@ -90,7 +90,7 @@ def append_db_file_from_path(folder_path, face_detector, ai85_adapter):
     subject_list = sorted(os.listdir(folder_path))
     emb_array = np.zeros([1024, 64]).astype(np.uint8)
     recorded_subject = []
-    emb_id = 0    
+    emb_id = 0
     output_shift = 2 #TODO: Check here for adj. output shift
     summary = {}
 
@@ -110,8 +110,8 @@ def append_db_file_from_path(folder_path, face_detector, ai85_adapter):
             img_rot = get_image_rotation(img_path)
             img = imread(img_path)
             img = rotate_image(img, img_rot)
-            img = img.astype(np.float32)
-            
+            img = img.astype(np.float32)            
+
             img = get_face_image(img, face_detector)
             if img is not None:
                 img = ((img+1)*128)
@@ -120,9 +120,9 @@ def append_db_file_from_path(folder_path, face_detector, ai85_adapter):
                 img = img.transpose([1, 2, 0])
 
                 if img.shape == (112, 112, 3):
-                    current_embedding = ai85_adapter.get_network_out(img)[0, :]                    
+                    current_embedding = ai85_adapter.get_network_out(img)[0, :]
                     current_embedding = current_embedding * 128 * output_shift #convert back to 8 bits after normalization
-                    current_embedding = np.clip(current_embedding, -128, 127)  #clamp if embedding > 0.5 or < -0.5 as shift = 2                                      
+                    current_embedding = np.clip(current_embedding, -128, 127)  #clamp if embedding > 0.5 or < -0.5 as shift = 2
                     current_embedding[current_embedding < 0] += 256 # Convert negatives to uint
                     current_embedding = np.around(current_embedding).astype(np.uint8).flatten()
 
@@ -130,51 +130,61 @@ def append_db_file_from_path(folder_path, face_detector, ai85_adapter):
                     recorded_subject.append(subject)
                     emb_id += 1
                     summary[subject] += 1
-
+                                      
     #np.save('emb_array.npy', emb_array)
     print('Database Summary')
     for key in summary:
         print(f'\t{key}:', f'{summary[key]} images')
     #Format summary for printing image counts per subject
-
-
+    
+        
 
     return emb_array, recorded_subject
-
-def coord_calc(box):
-    box[0] = torch.clamp(box[0], min=0) * 168
-    box[2] = torch.clamp(box[2], min=0) * 168
-    box[1] = torch.clamp(box[1], min=0) * 224
-    box[3] = torch.clamp(box[3], min=0) * 224
-    
-    top = torch.Tensor.int(box[1])
-    left = torch.Tensor.int(box[0])
-    height = torch.Tensor.int(box[3]-box[1])
-    width = torch.Tensor.int(box[2]-box[0])
-    return top, left, height, width
-
-def get_face_image(img, face_detector, min_prob=0.25):
+def get_face_image(img, face_detector):
     """Detects face on the given image
     """
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    bboxes, lndmrks = face_detector.detect(img)
+    try:
+        pbox = bboxes[0]
+    except IndexError:
+        print('No face detected')
+        return None
     img = torch.Tensor(img.transpose([2, 0, 1])).to(device).unsqueeze(0)
     
-    img = Normalize_Img(img)
-    img = VF.resize(img, size=[224, 168])
-    with torch.no_grad():
-        locs, scores = face_detector.get_network_out(img)
-        all_images_boxes, all_images_labels, all_images_scores = \
-                face_detector.simulator.model.detect_objects(locs, scores,
-                                 min_score=min_prob,
-                                 max_overlap=1,
-                                 top_k= 1)
-        if all_images_labels[0][0] == 1:
-            pbox = all_images_boxes[0][0]
-            top, left, height, width = coord_calc(pbox)
-            img = VF.resized_crop(img= img, top=top, left=left, height=height, width=width, size=[112,112])
-            return img
+    img = Normalize_Img(img) #Normalize image for faceID
+        
+    # Convert bounding box to square
+    height = pbox[3] - pbox[1]
+    width = pbox[2] - pbox[0]
+    max_dim = max(height, width)
+    pbox[0] = np.clip(pbox[0] - (max_dim - width) / 2, 0, img.shape[3])
+    pbox[1] = np.clip(pbox[1] - (max_dim - height) / 2, 0, img.shape[2])
+    pbox[2] = np.clip(pbox[2] + (max_dim - width) / 2, 0, img.shape[3])
+    pbox[3] = np.clip(pbox[3] + (max_dim - height) / 2, 0, img.shape[2])
 
-    return None
+    # Crop image with the square bounding box
+    img = VF.crop(img=img, top=int(pbox[1]), left=int(pbox[0]),
+                  height=int(pbox[3]-pbox[1]), width=int(pbox[2]-pbox[0]))
+            
+    # Check if the cropped image is square, if not, pad it
+
+    _, _, h, w = img.shape
+    if w != h:
+        max_dim = max(w, h)
+        h_padding = (max_dim - h) / 2
+        w_padding = (max_dim - w) / 2
+        l_pad = w_padding if w_padding % 1 == 0 else w_padding+0.5
+        t_pad = h_padding if h_padding % 1 == 0 else h_padding+0.5
+        r_pad = w_padding if w_padding % 1 == 0 else w_padding-0.5
+        b_pad = h_padding if h_padding % 1 == 0 else h_padding-0.5
+        padding = (int(l_pad), int(t_pad), int(r_pad), int(b_pad))
+        img = VF.pad(img, padding, 0, 'constant')
+            
+    # Resize cropped image to the desired size
+    img = VF.resize(img, (112, 112))
+
+    return img
 
 def create_baseaddr_include_file(baseaddr_h_path):
 
@@ -190,7 +200,7 @@ def create_baseaddr_include_file(baseaddr_h_path):
         "0x509a0000", "0x509a4000", "0x509a8000", "0x509ac000", "0x509b0000", "0x509b4000", "0x509b8000", "0x509bc000",
         "0x50d80000", "0x50d84000", "0x50d88000", "0x50d8c000", "0x50d90000", "0x50d94000", "0x50d98000", "0x50d9c000",
         "0x50da0000", "0x50da4000", "0x50da8000", "0x50dac000", "0x50db0000", "0x50db4000", "0x50db8000", "0x50dbc000"]
-    
+
     if baseaddr_h_path is not None:
         with open(baseaddr_h_path, 'w') as h_file:
             h_file.write('#define BASEADDR { \\\n  ')
@@ -215,11 +225,12 @@ def create_weights_include_file(emb_array, weights_h_path, baseaddr):
     Embedding_dimension = 64
     extension = os.path.splitext(weights_h_path)[1]
 
+    
     length = "0x00000101"
     data_arr = []
     data_line = []
     
-
+    
     if extension == '.h':
         with open(weights_h_path, 'w') as h_file:
             four_byte = []
@@ -254,7 +265,7 @@ def create_weights_include_file(emb_array, weights_h_path, baseaddr):
                         if (len(data_line) % 8) == 0:
                             data_arr.append(', '.join(data_line))
                             data_line.clear()
-
+        
             data_arr.append(', '.join(data_line))
             data = ', \\\n  '.join(data_arr)
             h_file.write(data)

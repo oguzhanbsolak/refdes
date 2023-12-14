@@ -132,7 +132,7 @@ static uint16_t thresholdHigh = THRESHOLD_HIGH;
 static uint16_t thresholdLow = THRESHOLD_LOW;
 static int16_t  x0, x1, Coeff;
 static int32_t  y0, y1;
-static int8_t enable_audio = 1;
+static int8_t enable_audio = 0; // Disabled audio for facial recognition demo
 static int8_t enable_sleep = 0;
 static volatile int8_t button_pressed = 0;
 

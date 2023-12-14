@@ -68,10 +68,10 @@ device_info_t device_info = {0};
 timestamps_t timestamps = {0};
 
 volatile device_settings_t device_settings = {
-        .enable_ble = 1,
+        .enable_ble = 0,
         .enable_lcd = 1,
-        .enable_max78000_audio = 1,
-        .enable_max78000_audio_cnn = 1,
+        .enable_max78000_audio = 0,
+        .enable_max78000_audio_cnn = 0,
         .enable_max78000_video = 0,
         .enable_max78000_video_cnn = 0,
         .enable_max78000_video_flash_led = 0,
@@ -81,7 +81,7 @@ volatile device_settings_t device_settings = {
         .enable_lcd_probabilty = 1,
         .enable_ble_send_statistics = 0,
         .enable_ble_send_classification = 0,
-        .enable_inactivity = 1,
+        .enable_inactivity = 0,
         .lcd_rotation = LCD_ROTATION_UP,
 };
 

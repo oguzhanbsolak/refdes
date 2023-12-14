@@ -70,7 +70,7 @@
 #ifdef USE_SAMPLEDATA // Include sample data
 #include "sampledata.h"
 #endif
-#define Threshold 63
+#define Threshold 70
 #define X_SIZE       168
 #define Y_SIZE       224
 #define X_OFFSET     0
@@ -288,7 +288,7 @@ static int8_t flash_led = 0;
 static int8_t camera_vflip = 1;
 static int8_t enable_video = 0;
 static int8_t enable_sleep = 0;
-static uint8_t qspi_payload_buffer[24672]; 
+static uint8_t qspi_payload_buffer[24672];
 uint8_t *raw;
 uint8_t *data;
 static version_t version = {S_VERSION_MAJOR, S_VERSION_MINOR, S_VERSION_BUILD};
@@ -429,7 +429,7 @@ int main(void)
         PR_INFO("qspi_dma_slave_init fail %d", ret);
         fail();
     }
-    
+
     // Initialize the camera driver.
     ret = camera_init(camera_clock);
     if (ret != E_NO_ERROR) {
@@ -471,7 +471,7 @@ int main(void)
     }
 
     // set camera clock prescaller to prevent streaming overflow due to QSPI communication and CNN load latency
-    // make the scale ratio of camera input size the same as output size, make is faster and regular    
+    // make the scale ratio of camera input size the same as output size, make is faster and regular
     camera_write_reg(0xc8, 0x1);
     camera_write_reg(0xc9, 0xE0);
     camera_write_reg(0xca, 0x1);
@@ -541,7 +541,7 @@ static void run_demo(void)
 
             // QSPI commands with payload
             switch(qspi_rx_header.info.packet_type) {
-                //Whenever a face is detected, the MAX32666 core sends weights of the FaceID model. 
+                //Whenever a face is detected, the MAX32666 core sends weights of the FaceID model.
                 //Four processors are handled for every packet transaction to reduce overhead.
                 case QSPI_PACKET_TYPE_WEIGHTS_KERNELS0:
                     cnn_enable_faceid(MXC_S_GCR_PCLKDIV_CNNCLKSEL_PCLK, MXC_S_GCR_PCLKDIV_CNNCLKDIV_DIV1);
@@ -575,7 +575,7 @@ static void run_demo(void)
                     memcpy32_faceid((uint32_t *) 0x501a8000, (uint32_t *)&qspi_payload_buffer[11720], 1465);
                     *((volatile uint8_t *) 0x501ac081) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x501ac000,(uint32_t *) &qspi_payload_buffer[17580], 1465);
-                    break;                     
+                    break;
                 case QSPI_PACKET_TYPE_WEIGHTS_KERNELS3:
                     *((volatile uint8_t *) 0x501b0081) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x501b0000, (uint32_t *)&qspi_payload_buffer[0], 1465);
@@ -646,7 +646,7 @@ static void run_demo(void)
                     memcpy32_faceid((uint32_t *) 0x50998000, (uint32_t *)&qspi_payload_buffer[12296], 1537);
                     *((volatile uint8_t *) 0x5099c001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x5099c000, (uint32_t *)&qspi_payload_buffer[18444], 1537);
-                    break; 
+                    break;
                 case QSPI_PACKET_TYPE_WEIGHTS_KERNELS10:
                     *((volatile uint8_t *) 0x509a0001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x509a0000, (uint32_t *)&qspi_payload_buffer[0], 1537);
@@ -697,7 +697,7 @@ static void run_demo(void)
                     *((volatile uint8_t *) 0x50dac001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x50dac000,(uint32_t *) &qspi_payload_buffer[18444], 1537);
                     break;
-                    
+
                 case QSPI_PACKET_TYPE_WEIGHTS_KERNELS15:
                     *((volatile uint8_t *) 0x50db0001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x50db0000,(uint32_t *) &qspi_payload_buffer[0], 1537);
@@ -709,13 +709,13 @@ static void run_demo(void)
                     memcpy32_faceid((uint32_t *) 0x50dbc000,(uint32_t *) &qspi_payload_buffer[18444], 1537);
                     //face_detected = 0;
                     face_weights_loaded = 1;
-                    PR_INFO("FaceID Weights Loading Time%d",(GET_RTC_MS() - weight_loading_time));  
+                    PR_INFO("FaceID Weights Loading Time%d",(GET_RTC_MS() - weight_loading_time));
                     break;
                 case QSPI_PACKET_TYPE_DOT_PRODUCT_WEIGHTS_0:
                 // After running the FaceID model, the MAX32666 core sends embeddings values to the MAX78000_Video core.
                     cnn_3_enable(MXC_S_GCR_PCLKDIV_CNNCLKSEL_PCLK, MXC_S_GCR_PCLKDIV_CNNCLKDIV_DIV1);
                     cnn_3_init(); // Bring CNN state machine into consistent state
-                    weight_loading_time = GET_RTC_MS(); 
+                    weight_loading_time = GET_RTC_MS();
                     *((volatile uint8_t *)        0x50180001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x50180000, (uint32_t *)&qspi_payload_buffer[0], 257);
                     *((volatile uint8_t *)        0x50184001) = 0x01; // Set address
@@ -723,7 +723,7 @@ static void run_demo(void)
                     *((volatile uint8_t *)        0x50188001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x50188000, (uint32_t *)&qspi_payload_buffer[2056], 257);
                     *((volatile uint8_t *)        0x5018c001) = 0x01; // Set address
-                    memcpy32_faceid((uint32_t *) 0x5018c000,(uint32_t *) &qspi_payload_buffer[3084], 257);  
+                    memcpy32_faceid((uint32_t *) 0x5018c000,(uint32_t *) &qspi_payload_buffer[3084], 257);
                     *((volatile uint8_t *)        0x50190001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x50190000, (uint32_t *)&qspi_payload_buffer[4112], 257);
                     *((volatile uint8_t *)        0x50194001) = 0x01; // Set address
@@ -740,7 +740,7 @@ static void run_demo(void)
                     memcpy32_faceid((uint32_t *) 0x501a8000, (uint32_t *)&qspi_payload_buffer[10280], 257);
                     *((volatile uint8_t *)        0x501ac001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x501ac000,(uint32_t *) &qspi_payload_buffer[11308], 257);
-                    *((volatile uint8_t *)        0x501b0001) = 0x01; // Set address    
+                    *((volatile uint8_t *)        0x501b0001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x501b0000, (uint32_t *)&qspi_payload_buffer[12336], 257);
                     *((volatile uint8_t *)        0x501b4001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x501b4000,(uint32_t *) &qspi_payload_buffer[13364], 257);
@@ -763,7 +763,7 @@ static void run_demo(void)
                     *((volatile uint8_t *)        0x50598001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x50598000, (uint32_t *)&qspi_payload_buffer[22616], 257);
                     *((volatile uint8_t *)        0x5059c001) = 0x01; // Set address
-                    memcpy32_faceid((uint32_t *) 0x5059c000, (uint32_t *)&qspi_payload_buffer[23644], 257);   
+                    memcpy32_faceid((uint32_t *) 0x5059c000, (uint32_t *)&qspi_payload_buffer[23644], 257);
                     break;
                 case QSPI_PACKET_TYPE_DOT_PRODUCT_WEIGHTS_1:
                     *((volatile uint8_t *)       0x505a0001) = 0x01; // Set address
@@ -773,7 +773,7 @@ static void run_demo(void)
                     *((volatile uint8_t *)       0x505a8001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x505a8000, (uint32_t *)&qspi_payload_buffer[2056], 257);
                     *((volatile uint8_t *)       0x505ac001) = 0x01; // Set address
-                    memcpy32_faceid((uint32_t *) 0x505ac000,(uint32_t *) &qspi_payload_buffer[3084], 257); 
+                    memcpy32_faceid((uint32_t *) 0x505ac000,(uint32_t *) &qspi_payload_buffer[3084], 257);
                     *((volatile uint8_t *)       0x505b0001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x505b0000,(uint32_t *) &qspi_payload_buffer[4112], 257);
                     *((volatile uint8_t *)       0x505b4001) = 0x01; // Set address
@@ -781,7 +781,7 @@ static void run_demo(void)
                     *((volatile uint8_t *)       0x505b8001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x505b8000, (uint32_t *)&qspi_payload_buffer[6168], 257);
                     *((volatile uint8_t *)       0x505bc001) = 0x01; // Set address
-                    memcpy32_faceid((uint32_t *) 0x505bc000, (uint32_t *)&qspi_payload_buffer[7196], 257); 
+                    memcpy32_faceid((uint32_t *) 0x505bc000, (uint32_t *)&qspi_payload_buffer[7196], 257);
                     *((volatile uint8_t *)        0x50980001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x50980000, (uint32_t *)&qspi_payload_buffer[8224], 257);
                     *((volatile uint8_t *)        0x50984001) = 0x01; // Set address
@@ -790,7 +790,7 @@ static void run_demo(void)
                     memcpy32_faceid((uint32_t *) 0x50988000, (uint32_t *)&qspi_payload_buffer[10280], 257);
                     *((volatile uint8_t *)        0x5098c001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x5098c000,(uint32_t *) &qspi_payload_buffer[11308], 257);
-                    *((volatile uint8_t *)        0x50990001) = 0x01; // Set address    
+                    *((volatile uint8_t *)        0x50990001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x50990000, (uint32_t *)&qspi_payload_buffer[12336], 257);
                     *((volatile uint8_t *)        0x50994001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x50994000,(uint32_t *) &qspi_payload_buffer[13364], 257);
@@ -823,7 +823,7 @@ static void run_demo(void)
                     *((volatile uint8_t *)        0x50d88001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x50d88000, (uint32_t *)&qspi_payload_buffer[2056], 257);
                     *((volatile uint8_t *)        0x50d8c001) = 0x01; // Set address
-                    memcpy32_faceid((uint32_t *) 0x50d8c000,(uint32_t *) &qspi_payload_buffer[3084], 257);  
+                    memcpy32_faceid((uint32_t *) 0x50d8c000,(uint32_t *) &qspi_payload_buffer[3084], 257);
                     *((volatile uint8_t *)        0x50d90001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x50d90000, (uint32_t *)&qspi_payload_buffer[4112], 257);
                     *((volatile uint8_t *)        0x50d94001) = 0x01; // Set address
@@ -840,7 +840,7 @@ static void run_demo(void)
                     memcpy32_faceid((uint32_t *) 0x50da8000, (uint32_t *)&qspi_payload_buffer[10280], 257);
                     *((volatile uint8_t *)        0x50dac001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x50dac000,(uint32_t *) &qspi_payload_buffer[11308], 257);
-                    *((volatile uint8_t *)       0x50db0001) = 0x01; // Set address    
+                    *((volatile uint8_t *)       0x50db0001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x50db0000, (uint32_t *)&qspi_payload_buffer[12336], 257);
                     *((volatile uint8_t *)        0x50db4001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x50db4000,(uint32_t *) &qspi_payload_buffer[13364], 257);
@@ -849,8 +849,8 @@ static void run_demo(void)
                     *((volatile uint8_t *)        0x50dbc001) = 0x01; // Set address
                     memcpy32_faceid((uint32_t *) 0x50dbc000,(uint32_t *) &qspi_payload_buffer[15420], 257);
                     embeddings_loaded = 1;
-                    PR_INFO("Embeddings Weights Loading Time%d",(GET_RTC_MS() - weight_loading_time));  
-                    break;                    
+                    PR_INFO("Embeddings Weights Loading Time%d",(GET_RTC_MS() - weight_loading_time));
+                    break;
 
                 case QSPI_PACKET_TYPE_VIDEO_FACEID_EMBED_UPDATE_CMD:
                     PR_INFO("Command not supported");
@@ -1023,20 +1023,20 @@ static void run_demo(void)
             continue;
         }
 
-            if (camera_is_image_rcv()) { 
+            if (camera_is_image_rcv()) {
 
                 if(!cnn_3_flag){
                     send_img();
                 }
-    
+
                 if (enable_cnn && !getting_name) {
                     if(record_mode){
-                        //If record mode is active until the capture button is pressed, only the face_detection model runs. 
-                        if(capture){        
+                        //If record mode is active until the capture button is pressed, only the face_detection model runs.
+                        if(capture){
                             if(face_weights_loaded && face_detected){
                                 PR_INFO("run_cnn2");
                                 run_cnn2(0, 0);
-                                face_weights_loaded = 0;                            
+                                face_weights_loaded = 0;
                             }
                             else{
                                 run_cnn();
@@ -1047,10 +1047,10 @@ static void run_demo(void)
                         }
                     }
                     else{
-                        //If the record mode is not active, first the face_detection model runs. 
-                        //When a face is detected, the FaceID weights are loaded and the face_weights_loaded flag is set. 
-                        //Afterward, the FaceID model runs. Finally, the weights of the DotProduct model are loaded to the 
-                        //CNN and the results from the FaceID model are fed into the CNN as input. 
+                        //If the record mode is not active, first the face_detection model runs.
+                        //When a face is detected, the FaceID weights are loaded and the face_weights_loaded flag is set.
+                        //Afterward, the FaceID model runs. Finally, the weights of the DotProduct model are loaded to the
+                        //CNN and the results from the FaceID model are fed into the CNN as input.
                         //The final maximum index is sent to the MAX32666 core.
                         if(face_weights_loaded){
                             run_cnn2(0, 0);
@@ -1069,7 +1069,7 @@ static void run_demo(void)
                 }
                 else
               	    PR_INFO("CNN_DIS");
-            
+
                 time_counter++;
                 camera_start_capture_image();
             }
@@ -1179,7 +1179,7 @@ static void run_cnn(void)
 		default:
 			break;
 		}
-	
+
     // Process CNN output
     get_priors();
     localize_objects();
@@ -1294,7 +1294,7 @@ static void get_prior_cls(void)
 {
     int8_t* cl_addr = (int8_t*)0x50410000;
 
-    int ar_idx, cl_idx, scale_idx, rel_idx, prior_idx, prior_count;   
+    int ar_idx, cl_idx, scale_idx, rel_idx, prior_idx, prior_count;
 
     for (scale_idx = 0; scale_idx < NUM_SCALES; ++scale_idx) {
         prior_count = MULT(dims[scale_idx][0], dims[scale_idx][1]);
@@ -1304,10 +1304,10 @@ static void get_prior_cls(void)
 
             for (rel_idx = 0; rel_idx < prior_count; ++rel_idx) {
 
-                for (cl_idx = 0; cl_idx < NUM_CLASSES-1; cl_idx += 1) { 
-                    cl_addr_temp += cl_idx;       
+                for (cl_idx = 0; cl_idx < NUM_CLASSES-1; cl_idx += 1) {
+                    cl_addr_temp += cl_idx;
                     prior_idx = get_prior_idx(ar_idx, scale_idx, rel_idx);
-                    memcpy(&prior_cls[NUM_CLASSES * prior_idx + cl_idx], cl_addr_temp,1);                    
+                    memcpy(&prior_cls[NUM_CLASSES * prior_idx + cl_idx], cl_addr_temp,1);
                 }
 
                 cl_addr_temp += 3;
@@ -1474,7 +1474,7 @@ static void nms(void)
 
     for (class_idx = 0; class_idx < (NUM_CLASSES - 2); ++class_idx) {
         for (nms_idx1 = 0; nms_idx1 < num_nms_priors[class_idx]; ++nms_idx1) {
-            if (nms_removed[class_idx][nms_idx1] != 1 &&            
+            if (nms_removed[class_idx][nms_idx1] != 1 &&
                 nms_idx1 != num_nms_priors[class_idx] - 1) {
                 for (nms_idx2 = nms_idx1 + 1; nms_idx2 < num_nms_priors[class_idx]; ++nms_idx2) {
                     prior1_idx = nms_indices[class_idx][nms_idx1];
@@ -1546,7 +1546,7 @@ static void localize_objects(void)
     float cxcy[4];
     float xy[4];
     int class_idx, prior_idx, global_prior_idx;
-    uint8_t obj_number = 0; 
+    uint8_t obj_number = 0;
     nms();
 
     for (class_idx = 0; class_idx < (NUM_CLASSES - 2); ++class_idx) {
@@ -1560,9 +1560,9 @@ static void localize_objects(void)
                 PR_DEBUG("class: %d, prior_idx: %d, prior: %d, x1: %.2f, y1: %.2f, x2: %.2f, y2: "
                        "%.2f \n",
                        class_idx + 1, prior_idx, global_prior_idx, (double)xy[0], (double)xy[1], (double)xy[2], (double)xy[3]);
-                
+
                 // Save objects box coordinates
-                
+
                 objects[obj_number*ML_DATA_SIZE + 1] = class_idx;
                 objects[obj_number*ML_DATA_SIZE + 2] = (uint8_t)IMG_SCALE*LCD_WIDTH*MAX(xy[0], 0); // x1
                 objects[obj_number*ML_DATA_SIZE + 3] = (uint8_t)IMG_SCALE*LCD_HEIGHT*MAX(xy[1], 0); // y1
@@ -1578,15 +1578,15 @@ static void localize_objects(void)
         }
     }
 
-    if(obj_number) {    
+    if(obj_number) {
         // First element is number of detected objects
         objects[0] = obj_number;
 
         // Send result to MAX32666
-        qspi_slave_send_packet(&objects[0], ML_DATA_SIZE*1 + 1, QSPI_PACKET_TYPE_VIDEO_ML_RES);   
+        qspi_slave_send_packet(&objects[0], ML_DATA_SIZE*1 + 1, QSPI_PACKET_TYPE_VIDEO_ML_RES);
 
         face_detected = 1;
-        
+
     }
     else{
         classification_result.classification = CLASSIFICATION_NOTHING;
@@ -1603,15 +1603,59 @@ static void run_cnn2(int x_offset, int y_offset)
     float x_prime;
     uint8_t x_loc;
     uint8_t y_loc;
-    uint8_t x1 = MAX(box[0], 0);
-    uint8_t y1 = MAX(box[1], 0);
+
+    int adj_boxes[4];
+    int diff = 0;
+    //uint8_t x1 = MAX(box[0], 0);
+    //uint8_t y1 = MAX(box[1], 0);
     uint8_t box_width = box[2] - box[0];
     uint8_t box_height = box[3] - box[1];
     uint32_t w, h;
+
+    if (box_width > box_height) {
+        diff = box_width - box_height;
+        PR_DEBUG("width is bigger diff: %d", diff);
+        PR_DEBUG("x1: %d, y1: %d, x2: %d, y2: %d", box[0], box[1], box[2], box[3]);
+        if (diff % 2 == 0) {
+
+            adj_boxes[1] = (int)box[1] - diff / 2 ;
+            adj_boxes[3] = (int)box[3] + diff / 2 ;
+        }
+        else {
+            adj_boxes[1] = (int)box[1] - diff / 2 ;
+            adj_boxes[3] = (int)box[3] + diff / 2 + 1;
+        }
+        adj_boxes[0] = (int)box[0];
+        adj_boxes[2] = (int)box[2];
+        PR_DEBUG("ADJUSTED x1: %d, y1: %d, x2: %d, y2: %d", adj_boxes[0], adj_boxes[1], adj_boxes[2], adj_boxes[3]);
+    }
+    else {
+        diff = box_height - box_width;
+        PR_DEBUG("height is bigger diff: %d", diff);
+        PR_DEBUG("x1: %d, y1: %d, x2: %d, y2: %d", box[0], box[1], box[2], box[3]);
+        if (diff % 2 == 0) {
+            adj_boxes[0] = (int)box[0] - diff / 2 ;
+            adj_boxes[2] = (int)box[2] + diff / 2 ;
+        }
+        else {
+            adj_boxes[0] = (int)box[0] - diff / 2 ;
+            adj_boxes[2] = (int)box[2] + diff / 2 + 1 ;
+        }
+        adj_boxes[1] = (int)box[1];
+        adj_boxes[3] = (int)box[3];
+        PR_DEBUG("ADJUSTED x1: %d, y1: %d, x2: %d, y2: %d", adj_boxes[0], adj_boxes[1], adj_boxes[2], adj_boxes[3]);
+
+    }
+
+    int x1 =  adj_boxes[0];
+    int y1 =  adj_boxes[1];
+    box_height = adj_boxes[3] - adj_boxes[1];
+    box_width = adj_boxes[2] - adj_boxes[0];
+
     // Get the details of the image from the camera driver.
     camera_get_image(&raw, &imgLen, &w, &h);
     PR_INFO("w: %d, h: %d", w, h);
-    data = raw; 
+    data = raw;
 
 #ifdef PRINT_TIME_CNN
     uint32_t pass_time = GET_RTC_MS();
@@ -1641,7 +1685,12 @@ static void run_cnn2(int x_offset, int y_offset)
             uint32_t number;
             x_prime = ((float)(j) / FACEID_WIDTH) * box_width;
             x_loc = (uint8_t)(MIN(round(x_prime), box_width - 1));
-
+            if ((x1 + x_loc < 0) || (y1 + y_loc < 0) || (x1 + x_loc >= FACEDETECTION_WIDTH) || (y1 + y_loc >= FACEDETECTION_HEIGHT)) {
+                b = 0;
+                g = 0;
+                r = 0;
+            }
+            else{
             ub = (uint8_t)(data[x_loc * LCD_BYTE_PER_PIXEL  + 1] << 3);
             ug = (uint8_t)((data[x_loc * LCD_BYTE_PER_PIXEL ] << 5) |
                            ((data[x_loc * LCD_BYTE_PER_PIXEL  + 1] & 0xE0) >> 3));
@@ -1650,19 +1699,20 @@ static void run_cnn2(int x_offset, int y_offset)
             b = ub - 128;
             g = ug - 128;
             r = ur - 128;
+            }
 
             number = 0x00FFFFFF & ((((uint8_t)b) << 16) | (((uint8_t)g) << 8) | ((uint8_t)r));
             // Loading data into the CNN fifo
             // Remove the following line if there is no risk that the source would overrun the FIFO:
 
-            
+
             while (((*((volatile uint32_t *)0x50000004) & 1)) != 0)
                 ; // Wait for FIFO 0
 
             *((volatile uint32_t *)0x50000008) = number; // Write FIFO 0
         }
     }
- 
+
 #ifdef PRINT_TIME_CNN
     PR_TIMER("CNN load : %d", GET_RTC_MS() - pass_time);
     pass_time = GET_RTC_MS();
@@ -1705,27 +1755,27 @@ static void run_cnn2(int x_offset, int y_offset)
         pr_value = (int8_t)(value & 0xff);
         n1 = 128 * pr_value * b;
         if (n1 < 0) {
-            n1 = 256 + n1;           
+            n1 = 256 + n1;
         }
 
         pr_value = (int8_t)((value >> 8) & 0xff);
         n2 = 128 * pr_value * b;
         if (n2 < 0) {
-            n2 = 256 + n2;           
+            n2 = 256 + n2;
         }
 
         pr_value = (int8_t)((value  >> 16) & 0xff);
         n3 = 128 * pr_value * b;
         if (n3 < 0) {
-            n3 = 256 + n3;           
+            n3 = 256 + n3;
         }
         pr_value = (int8_t)((value >> 24) & 0xff);
         n4 = 128 * pr_value * b;
         if (n4 < 0) {
-            n4 = 256 + n4;           
+            n4 = 256 + n4;
         }
-        
-        output_buffer[i] = (((uint8_t)n4) << 24) | (((uint8_t)n3) << 16) | (((uint8_t)n2) << 8) | ((uint8_t)n1); 
+
+        output_buffer[i] = (((uint8_t)n4) << 24) | (((uint8_t)n3) << 16) | (((uint8_t)n2) << 8) | ((uint8_t)n1);
     }
 
 
@@ -1756,7 +1806,7 @@ static void run_cnn2(int x_offset, int y_offset)
                 output_buffer[i] = 256 - ((256 - output_buffer[i]) * CNN_3_OUTPUT_SHIFT);
             }
             else{
-                output_buffer[i] = output_buffer[i] * CNN_3_OUTPUT_SHIFT;          
+                output_buffer[i] = output_buffer[i] * CNN_3_OUTPUT_SHIFT;
             }
         }
         qspi_packet_header_t qspi_rx_header;
@@ -1852,7 +1902,7 @@ static void run_cnn3(){
 
     memcpy32((uint32_t *) 0x51018000, out_point, 1);
     cnn_3_start(); // Start CNN_3
-    
+
     while (cnn_3_time == 0);
 
     cnn_3_unload((uint32_t *) ml_3_data32);
@@ -1863,9 +1913,9 @@ static void run_cnn3(){
     int32_t max_emb_index = 0;
     uint32_t value;
     int8_t pr_value;
-    
+
     for (int i = 0; i < (1024+3)/4; i++) // 1024 is the maximum embedding number that we can have.
-    {   
+    {
         value = *ml_point;
         pr_value = value & 0xff;
         if ((int8_t)pr_value > max_emb)
@@ -1880,7 +1930,7 @@ static void run_cnn3(){
         {
             max_emb = (int8_t)pr_value;
             max_emb_index = (i*4)+1;
-            
+
         }
 
         pr_value = (value >> 16) & 0xff;
@@ -1900,14 +1950,14 @@ static void run_cnn3(){
         }
 
         ml_point++;
-    } 
+    }
     PR_INFO("CNN_3 max value: %d \n", max_emb);
     PR_INFO("CNN_3 max value index: %d \n", max_emb_index);
     if (max_emb > Threshold)
     {
         classification_result.classification = CLASSIFICATION_DETECTED;
         classification_result.max_embed_index = max_emb_index;
-        qspi_slave_send_packet((uint8_t *) &classification_result, sizeof(classification_result), QSPI_PACKET_TYPE_VIDEO_CLASSIFICATION_RES);                                                                                                
+        qspi_slave_send_packet((uint8_t *) &classification_result, sizeof(classification_result), QSPI_PACKET_TYPE_VIDEO_CLASSIFICATION_RES);
     }
     else
     {
