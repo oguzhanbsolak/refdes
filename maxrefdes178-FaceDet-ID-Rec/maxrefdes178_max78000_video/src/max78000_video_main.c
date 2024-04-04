@@ -526,7 +526,7 @@ static void run_demo(void)
 
         /* Check if QSPI RX has data */
         qspi_rx_state = qspi_slave_get_rx_state();
-        if (qspi_rx_state == QSPI_STATE_CS_DEASSERTED_HEADER) {
+                if (qspi_rx_state == QSPI_STATE_CS_DEASSERTED_HEADER) {
             qspi_rx_header = qspi_slave_get_rx_header();
             // Use camera interface buffer for QSPI payload
             MXC_PCIF_Stop();
@@ -1023,7 +1023,7 @@ static void run_demo(void)
             continue;
         }
 
-            if (camera_is_image_rcv()) {
+            else if (camera_is_image_rcv()) {
 
                 if(!cnn_3_flag){
                     send_img();

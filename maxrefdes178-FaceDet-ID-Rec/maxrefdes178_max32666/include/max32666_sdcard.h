@@ -59,4 +59,10 @@ int cnn_2_load_weights_from_SD(void);
 int record_embeddings(char *name, uint8_t *embeddings);
 int find_names_number(char names[][7], int *number);
 int sending_embeddings();
+int recrate_database();
+int create_database();
+int create_weights();
+int delete_database();
+int delete_weights();
+int return_emb_count();
 #endif /* _MAX32666_SDCARD_H_ */

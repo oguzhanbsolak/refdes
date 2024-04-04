@@ -227,6 +227,115 @@ int cnn_2_load_weights_from_SD(void)
 
     return 0;
 }
+int recrate_database(){
+    printf("Recreating database\n");
+    printf("Deleting database\n");
+    err = delete_database();
+    if(err != FR_OK){
+        return err;
+    }
+    printf("Deleting weights\n");
+    err = delete_weights();
+    if(err != FR_OK){
+        return err;
+    }
+    printf("Creating database\n");
+    err = create_database();
+    if(err != FR_OK){
+        return err;
+    }
+    printf("Creating weights\n");
+    err = create_weights();
+    if(err != FR_OK){
+        return err;
+    }
+    printf("Database recreated\n");
+    return 0;
+}
+
+int create_database(){
+    uint32_t db_number = 0;
+    if ((err = f_open(&database, "database.bin", FA_CREATE_ALWAYS | FA_WRITE)) != FR_OK) {
+        printf("ERROR opening file: %s\n", FF_ERRORS[err]);
+        f_mount(NULL, "", 0);
+        while (1)
+            ;
+    }
+    if ((err = f_write(&database, &db_number, 4, &bytes_written)) != FR_OK) {
+        printf("Error writing file: %s\n", FF_ERRORS[err]);
+        f_mount(NULL, "", 0);
+        return err;
+    }
+    if ((err = f_close(&database)) != FR_OK) {
+        printf("ERROR closing file: %s\n", FF_ERRORS[err]);
+        f_mount(NULL, "", 0);
+        while (1)
+            ;
+    }
+    return 0;
+}
+
+int create_weights(){
+    //Copy from the initial weights file to the new weights file
+    uint8_t *ptr;
+    if ((err = f_open(&file, "weights_3_initial.bin", FA_READ)) != FR_OK) {
+        printf("ERROR opening file: %s\n", FF_ERRORS[err]);
+        f_mount(NULL, "", 0);
+        while (1)
+            ;
+    }
+    if ((err = f_open(&record_embed, "weights_3.bin", FA_CREATE_ALWAYS | FA_WRITE)) != FR_OK) {
+        printf("ERROR opening file: %s\n", FF_ERRORS[err]);
+        f_mount(NULL, "", 0);
+        while (1)
+            ;
+    }
+    // Set beginning of the file
+    f_lseek(&file, 0);
+
+    //use the kernel buffer as we do in sending embeddings
+    ptr = read_weights_from_SD(24672);
+    f_write(&record_embed, (uint8_t *)ptr, 24672, &bytes_written);
+    ptr = read_weights_from_SD(24672);
+    f_write(&record_embed, (uint8_t *)ptr, 24672, &bytes_written);
+    ptr = read_weights_from_SD(16448);
+    f_write(&record_embed, (uint8_t *)ptr, 16448, &bytes_written);
+    if ((err = f_close(&file)) != FR_OK) {
+        printf("ERROR closing file: %s\n", FF_ERRORS[err]);
+        f_mount(NULL, "", 0);
+        while (1)
+            ;
+    }
+    if ((err = f_close(&record_embed)) != FR_OK) {
+        printf("ERROR closing file: %s\n", FF_ERRORS[err]);
+        f_mount(NULL, "", 0);
+        while (1)
+            ;
+    }
+
+    return 0;
+}
+
+
+int delete_database(){
+    if ((err = f_unlink("database.bin")) != FR_OK) {
+        printf("ERROR deleting file: %s\n", FF_ERRORS[err]);
+        f_mount(NULL, "", 0);
+        while (1)
+            ;
+    }
+    return 0;
+}
+int delete_weights(){
+    if ((err = f_unlink("weights_3.bin")) != FR_OK) {
+        printf("ERROR deleting file: %s\n", FF_ERRORS[err]);
+        f_mount(NULL, "", 0);
+        while (1)
+            ;
+    }
+    return 0;
+}
+
 int find_names_number(char names[][7], int *number){
     if ((err = f_open(&database, "database.bin", FA_OPEN_ALWAYS| FA_READ)) != FR_OK) {
         printf("ERROR opening file: %s\n", FF_ERRORS[err]);
@@ -255,6 +364,30 @@ int find_names_number(char names[][7], int *number){
     }    
     return 0;
 }
+
+int return_emb_count(){
+    uint32_t db_number = 0;
+    if ((err = f_open(&database, "database.bin", FA_OPEN_ALWAYS| FA_READ)) != FR_OK) {
+        printf("ERROR opening file: %s\n", FF_ERRORS[err]);
+        f_mount(NULL, "", 0);
+        while (1)
+            ;
+    }
+    if ((err = f_read(&database, (uint8_t *)&db_number, 4, &bytes_read)) != FR_OK) {
+        printf("ERROR reading file: %s\n", FF_ERRORS[err]);
+        f_mount(NULL, "", 0);
+        while (1)
+            ;
+    }
+    if ((err = f_close(&database)) != FR_OK) {
+        printf("ERROR closing file: %s\n", FF_ERRORS[err]);
+        f_mount(NULL, "", 0);
+        while (1)
+            ;
+    }    
+    return db_number;
+}
+
 int record_embeddings(char *name, uint8_t *embeddings){
 
     uint32_t db_number = 0;
@@ -266,6 +399,7 @@ int record_embeddings(char *name, uint8_t *embeddings){
         while (1)
             ;
     }
+
     f_lseek(&database, 0); 
     if ((err = f_read(&database, &db_number, 4, &bytes_read_embeddings)) !=
         FR_OK) {

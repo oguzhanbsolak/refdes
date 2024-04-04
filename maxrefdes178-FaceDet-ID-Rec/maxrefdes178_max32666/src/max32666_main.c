@@ -557,6 +557,8 @@ static void run_application(void)
             //PASS
         } 
         else {
+            //dumb qspi rx worker
+            //qspi_master_video_rx_worker(&qspi_packet_type_rx);
             // If video is disabled, draw logo and refresh periodically
             if ((timer_ms_tick - timestamps.screen_drew) > LCD_VIDEO_DISABLE_REFRESH_DURATION) {
                 memcpy(lcd_data.buffer, adi_logo, sizeof(lcd_data.buffer));
@@ -661,6 +663,12 @@ static void run_application(void)
                         
             printf("name:%s\n",embeddings.embeddings_name);
             MXC_TS_RemoveAllButton();
+            //Check if the name is RESET
+            if (strncmp(embeddings.embeddings_name, "RESET", 5) == 0) {
+                //record = 0;
+                recrate_database();
+            }
+
         }
         if(record && !capture && !getting_name){
             block_button_x = 0; //Enable exit button
@@ -672,7 +680,13 @@ static void run_application(void)
             MXC_TS_AddButton(1,180,240,240,1);
             lcd_data.refresh_screen = 1;
             key = MXC_TS_GetKey();
-            if(key==1){
+            if (strncmp(embeddings.embeddings_name, "RESET", 5) == 0) {
+                //record = 0;
+                record = 0;
+                embeddings.capture_number =0;
+                getting_name = 1;
+            } 
+            else if(key==1){
                 for (int try = 0; try < 3; try++) {
                     qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_CAPTURE_EN);
                     qspi_master_wait_video_int();
@@ -746,6 +760,17 @@ static int refresh_screen(void)
         }
     }
 
+    //Draw emb count always
+    int emb_count = return_emb_count();
+    //Convert emb_count to string
+    char emb_count_str[4];
+
+    sprintf(emb_count_str, "%d", emb_count);
+    //Merge the string with "Emb Count: "
+    char emb_count_str_full[20] = "Emb: ";
+    strncat(emb_count_str_full, emb_count_str, sizeof(emb_count_str_full) - 1);
+    strncpy(lcd_string_buff, emb_count_str_full, sizeof(lcd_string_buff) - 1);
+    fonts_putString(3, 3, lcd_string_buff, &Font_7x10, GREEN, 0, 0, lcd_data.buffer);
     
   
     // Draw FaceID frame and result
@@ -761,7 +786,8 @@ static int refresh_screen(void)
                 if(!record){
                     strncpy(lcd_string_buff, "UNKNOWN", sizeof(lcd_string_buff) - 1);
                     fonts_putStringCentered(LCD_HEIGHT - 29, lcd_string_buff, &Font_16x26, video_string_color, lcd_data.buffer);    
-                }            
+                }
+                            
             }
         }
     }

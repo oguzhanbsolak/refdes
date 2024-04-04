@@ -50,7 +50,8 @@
 #include "max32666_qspi_master.h"
 #include "max32666_timer_led_button.h"
 #include "maxrefdes178_definitions.h"
-
+#include "max32666_sdcard.h"
+#include "max32666_spi_dma.h"
 
 //-----------------------------------------------------------------------------
 // Defines
@@ -225,10 +226,12 @@ int button_worker(void)
     if (!device_settings.enable_max78000_video) {
         button_x_int = 0; // if video is disabled, ignore button X
     }
-    if (button_x_int) {
+
+    else if (button_x_int) {
         button_x_int = 0;
         PR_INFO("button X pressed");
         MXC_Delay(20000);
+
         if (!record) {
             for (int try = 0; try < 3; try++) {
                 qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_RECORD_EN);
@@ -260,9 +263,8 @@ int button_worker(void)
 
     if (button_power_int && !record) {
         button_power_int = 0;
-
+        
         PR_INFO("button power pressed");
-
         device_settings.enable_max78000_video = 0;
         for (int try = 0; try < 3; try++) {
                 qspi_master_send_video(NULL, 0, QSPI_PACKET_TYPE_VIDEO_DISABLE_CMD);
