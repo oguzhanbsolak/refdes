@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2020-2023 Maxim Integrated Products, Inc., All rights Reserved.
+ * Copyright (C) 2020-2021 Maxim Integrated Products, Inc., All rights Reserved.
  *
  * This software is protected by copyright laws of the United States and
  * of foreign countries. This material may also be protected by patent laws
@@ -128,15 +128,15 @@
 #define FACEDETECTION_DATA_SIZE            (FACEDETECTION_WIDTH * FACEDETECTION_HEIGHT * LCD_BYTE_PER_PIXEL)
 
 // Common CatsDogs
-#define CATSDOGS_WIDTH                     192
-#define CATSDOGS_HEIGHT                    172
+#define CATSDOGS_WIDTH                     128
+#define CATSDOGS_HEIGHT                    128
 
 #define CATSDOGS_RECTANGLE_X1              ((LCD_WIDTH - CATSDOGS_WIDTH) / 2)
 #define CATSDOGS_RECTANGLE_Y1              ((LCD_HEIGHT - CATSDOGS_HEIGHT) / 2)
 #define CATSDOGS_RECTANGLE_X2              (CATSDOGS_RECTANGLE_X1 + CATSDOGS_WIDTH)
 #define CATSDOGS_RECTANGLE_Y2              (CATSDOGS_RECTANGLE_Y1 + CATSDOGS_HEIGHT)
 
-// Common ASL
+// Common ASL 
 #define ASL_WIDTH                     192
 #define ASL_HEIGHT                    172
 
@@ -532,7 +532,7 @@ typedef enum {
     QSPI_PACKET_TYPE_WEIGHTS_KERNELS57,
     QSPI_PACKET_TYPE_WEIGHTS_KERNELS58,
     QSPI_PACKET_TYPE_WEIGHTS_KERNELS59,
-    QSPI_PACKET_TYPE_WEIGHTS_KERNELS60,
+    QSPI_PACKET_TYPE_WEIGHTS_KERNELS60,                
     QSPI_PACKET_TYPE_WEIGHTS_KERNELS61,
     QSPI_PACKET_TYPE_WEIGHTS_KERNELS62,
     QSPI_PACKET_TYPE_WEIGHTS_KERNELS63,
@@ -564,7 +564,7 @@ typedef enum {
     QSPI_PACKET_TYPE_AUDIO_DEMO_NAME_RES,      // Demo string
 
     QSPI_PACKET_TYPE_FACEDET_VIDEO_DATA_RES, // 224x168 RGB565 Image
-
+    
 	QSPI_PACKET_TYPE_AUDIO_LED_ON_CMD,   // None
 	QSPI_PACKET_TYPE_AUDIO_LED_OFF_CMD,   // None
 
